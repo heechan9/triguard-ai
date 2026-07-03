@@ -125,7 +125,7 @@ triguard-ai/
 
 ├── korea_provinces.json    # 한국 시도 GeoJSON
 
-├── data/                   # ⚠️ CSV 12종 직접 배치 필요 (Git 미포함)
+├── data/                   
 
 │   └── (CSV 12종 직접 배치 필요)
 
