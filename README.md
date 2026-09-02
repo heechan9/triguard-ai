@@ -153,3 +153,6 @@ triguard-ai/
 ## 직무 연계·인터뷰 가이드
 
 프로젝트의 구현 증거, 직무 연결, 자소서 구성과 주장 한계는 [`docs/ROLE_ALIGNMENT.md`](docs/ROLE_ALIGNMENT.md)에서 확인할 수 있습니다.
+
+Risk Score·합성 라벨 기반 ML·상관분석의 해석 한계와 향후 시간·지역 외부검증 및 정책효과 평가 기준은
+[`docs/CAUSAL_VALIDATION.md`](docs/CAUSAL_VALIDATION.md)에서 확인할 수 있습니다.
