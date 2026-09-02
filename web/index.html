@@ -17,6 +17,7 @@
       <nav>
         <a class="brand" href="#top" aria-label="TriGuard AI 홈"><i class="brand-mark">T</i><span><b>TRIGUARD</b><small>NATIONAL RISK OPERATIONS</small></span></a>
         <div class="nav-links">
+          <a href="#simulator">가상 시뮬레이션</a>
           <a href="#results">분석 결과</a>
           <a href="#method">검증 경계</a>
           <a href="https://github.com/heechan9/triguard-ai">GitHub</a>
@@ -41,6 +42,40 @@
         <span class="status-divider"></span>
         <div><small>LAST UPDATE</small><span id="generatedAt">결과를 불러오는 중입니다.</span></div>
         <span class="status-code">TG-OPS / PUBLIC</span>
+      </section>
+
+      <section id="simulator" class="section simulator-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">ASSUMPTION-BASED SIMULATOR</p><h2>가상 상황 모의분석</h2></div>
+          <p>입력한 가정에 따라 위험 구성요소와 우선순위가 어떻게 달라지는지 비교합니다. 실제 미래를 예측하거나 자동으로 대응을 결정하지 않습니다.</p>
+        </div>
+        <div class="simulator-grid">
+          <form id="simulatorForm" class="sim-controls">
+            <div class="control-header"><div><span>SCENARIO CONTROL</span><strong>모의 조건 설정</strong></div><button id="resetSimulation" type="button">초기화</button></div>
+            <label class="scenario-select"><span>상황 프리셋</span><select id="scenarioPreset">
+              <option value="baseline">기준 상태</option>
+              <option value="outbreak">지역 감염병 확산</option>
+              <option value="manpower">병역자원 부담 증가</option>
+              <option value="supply">조달·물자 공급 차질</option>
+              <option value="compound">복합 위기 상황</option>
+            </select></label>
+            <label><span><b>인력 부담</b><output id="manpowerOutput">0</output></span><input id="manpowerInput" type="range" min="-20" max="40" value="0" step="1" /></label>
+            <label><span><b>감염병 압력</b><output id="diseaseOutput">0</output></span><input id="diseaseInput" type="range" min="-20" max="40" value="0" step="1" /></label>
+            <label><span><b>물자 차질</b><output id="materialOutput">0</output></span><input id="materialInput" type="range" min="-20" max="40" value="0" step="1" /></label>
+            <label><span><b>대응 역량</b><output id="responseOutput">0</output></span><input id="responseInput" type="range" min="0" max="30" value="0" step="1" /></label>
+            <p class="formula-note"><b>투명한 산식</b> 지역별 기존 구성요소 수준에 비례한 변화분을 인력 35%, 감염병 40%, 물자 25%로 반영하고 대응 역량만큼 상승분을 완화합니다.</p>
+          </form>
+          <article class="sim-output" aria-live="polite">
+            <div class="control-header"><div><span>SIMULATION DELTA</span><strong>기준 대비 변화</strong></div><span id="simulationState" class="sim-state">BASELINE</span></div>
+            <div class="delta-score"><small>최우선 권역 예상 위험도</small><div><strong id="simTopScore">–</strong><span id="simTopDelta">±0.0</span></div><p id="simTopRegion">데이터 계산 중</p></div>
+            <div class="sim-metrics">
+              <div><span>주의 이상 권역</span><strong id="simElevated">–</strong></div>
+              <div><span>평균 위험도</span><strong id="simAverage">–</strong></div>
+              <div><span>최대 변화폭</span><strong id="simMaxDelta">–</strong></div>
+            </div>
+            <p class="sim-disclaimer"><span>SIMULATION ONLY</span> 이 결과는 사용자가 입력한 가정의 민감도 확인용이며 통계적 예측값이 아닙니다.</p>
+          </article>
+        </div>
       </section>
 
       <section id="results" class="section">
