@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "mkdir -p dist/data && cp -R web/. dist/ && cp korea_provinces.json dist/data/korea_provinces.json",
+  "buildCommand": "mkdir -p dist && cp -R web/. dist/",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "headers": [
