@@ -164,6 +164,8 @@ triguard-ai/
 | 김기호 | 문서 및 일정 관리 |
 | 김태희 | 데이터 조사 및 개발 |
 
+세부 구현 단위와 AI 지원 작업 범위는 [`CONTRIBUTIONS.md`](CONTRIBUTIONS.md)에 분리해 기록합니다.
+
 ## 직무 연계·인터뷰 가이드
 
 프로젝트의 구현 증거, 직무 연결, 자소서 구성과 주장 한계는 [`docs/ROLE_ALIGNMENT.md`](docs/ROLE_ALIGNMENT.md)에서 확인할 수 있습니다.
