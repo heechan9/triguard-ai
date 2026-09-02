@@ -92,6 +92,18 @@ streamlit run app.py
 
 저장소의 `data/` 폴더에는 개발·재현에 사용한 공개데이터 스냅샷이 포함돼 있습니다. 최신 분석 시에는 각 기관 공식 출처에서 갱신한 CSV를 같은 폴더에 배치하면 자동 감지됩니다.
 
+### Vercel 정적 데모
+
+`web/`은 같은 위험도 계산 결과를 빠르게 열람하는 정적 포트폴리오 화면입니다. 파일 업로드와 상세 분석은 기존 Streamlit 앱이 담당하며, Vercel 화면은 검토된 공개데이터 스냅샷만 표시합니다.
+
+데이터나 계산 규칙을 갱신한 뒤 다음 명령으로 정적 결과를 다시 생성합니다.
+
+```bash
+PYTHONPATH=. python scripts/export_web_data.py
+```
+
+배포 및 해석 범위는 [`docs/VERCEL_DEPLOYMENT.md`](docs/VERCEL_DEPLOYMENT.md)를 참고하세요.
+
 ---
 
 ## 📂 데이터 준비
@@ -113,6 +125,12 @@ streamlit run app.py
 triguard-ai/
 
 ├── app.py                  # 메인 Streamlit 앱
+
+├── web/                    # Vercel 정적 데모
+
+├── scripts/export_web_data.py  # 정적 결과 스냅샷 생성
+
+├── vercel.json             # Vercel 빌드·보안 헤더 설정
 
 ├── modules/
 
@@ -145,10 +163,6 @@ triguard-ai/
 | 최희찬 | 서비스 기획 및 개발 총괄 |
 | 김기호 | 문서 및 일정 관리 |
 | 김태희 | 데이터 조사 및 개발 |
-
-> 최희찬은 현재 서울동부지방법원 사회복무요원으로 복무 중이며,
-> 공공행정 현장 경험을 바탕으로 "단순 통계보다 대응 우선순위 판단 도구가 필요하다"는
-> 문제의식을 프로젝트 기획에 반영하였습니다.
 
 ## 직무 연계·인터뷰 가이드
 
