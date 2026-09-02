@@ -8,9 +8,14 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div class="system-strip" aria-label="시스템 상태">
+      <span>REPUBLIC OF KOREA</span>
+      <span class="system-name">통합 위험상황 모니터링 체계</span>
+      <span class="system-clock" id="systemClock">KST --:--:--</span>
+    </div>
     <header class="hero">
       <nav>
-        <a class="brand" href="#top" aria-label="TriGuard AI 홈">TRIGUARD <span>AI</span></a>
+        <a class="brand" href="#top" aria-label="TriGuard AI 홈"><i class="brand-mark">T</i><span><b>TRIGUARD</b><small>NATIONAL RISK OPERATIONS</small></span></a>
         <div class="nav-links">
           <a href="#results">분석 결과</a>
           <a href="#method">검증 경계</a>
@@ -18,8 +23,8 @@
         </div>
       </nav>
       <div id="top" class="hero-copy">
-        <p class="eyebrow">TRIGUARD AI DASHBOARD</p>
-        <h1>지역별 병력운용<br /><em>Risk Score 분석</em></h1>
+        <p class="eyebrow"><span class="live-dot"></span> OPERATIONAL PICTURE / 01</p>
+        <h1>통합 위험상황<br /><em>운영 대시보드</em></h1>
         <p class="lead">감염병·병역자원·조달 공개데이터를 바탕으로 우선 확인 지역과 위험 구성요소를 함께 보여주는 의사결정 지원 대시보드입니다.</p>
         <div class="actions">
           <a class="button primary" href="#results">결과 보기</a>
@@ -30,20 +35,23 @@
 
     <main>
       <section class="status" aria-label="데모 상태">
-        <span class="live-dot"></span>
-        <strong>정적 검증 스냅샷</strong>
-        <span id="generatedAt">결과를 불러오는 중입니다.</span>
+        <div><span class="live-dot"></span><strong>SYSTEM NOMINAL</strong></div>
+        <span class="status-divider"></span>
+        <div><small>DATA MODE</small><b>검증 스냅샷</b></div>
+        <span class="status-divider"></span>
+        <div><small>LAST UPDATE</small><span id="generatedAt">결과를 불러오는 중입니다.</span></div>
+        <span class="status-code">TG-OPS / PUBLIC</span>
       </section>
 
       <section id="results" class="section">
         <div class="section-heading">
-          <div><p class="eyebrow">OVERVIEW</p><h2>운영 우선순위</h2></div>
+          <div><p class="eyebrow">SITUATION OVERVIEW</p><h2>운영 우선순위</h2></div>
           <p>높은 점수는 자동 결정이 아니라 담당자가 먼저 원자료와 현황을 확인할 순서를 뜻합니다.</p>
         </div>
         <div id="kpis" class="kpi-grid" aria-live="polite"></div>
         <article class="map-panel">
           <div class="panel-title">
-            <div><p class="eyebrow">RISK MAP</p><h3>시·도별 위험도 지도</h3></div>
+            <div><p class="eyebrow">GEOSPATIAL OPERATING PICTURE</p><h3>시·도별 위험도 지도</h3></div>
             <div class="map-legend" aria-label="위험등급 범례">
               <span><i class="normal"></i>정상</span><span><i class="caution"></i>주의</span><span><i class="danger"></i>위험</span>
             </div>
@@ -56,26 +64,26 @@
               <p>지도에서 시·도를 누르면 담당 지방청과 위험도 구성요소를 확인할 수 있습니다.</p>
             </aside>
           </div>
-          <p class="map-note">경기도·강원도처럼 복수 지방청이 담당하는 시·도는 해당 지방청 점수의 평균을 표시합니다.</p>
+          <p class="map-note"><span>ANALYSIS NOTE</span> 경기도·강원도처럼 복수 지방청이 담당하는 시·도는 해당 지방청 점수의 평균을 표시합니다.</p>
         </article>
         <div class="panel-grid">
           <article class="panel wide">
-            <div class="panel-title"><div><p class="eyebrow">REGIONAL QUEUE</p><h3>지방청별 위험순위</h3></div><span class="pill">0–100</span></div>
+            <div class="panel-title"><div><p class="eyebrow">REGIONAL PRIORITY QUEUE</p><h3>지방청별 위험순위</h3></div><span class="pill">SCALE 0–100</span></div>
             <div id="riskBars" class="risk-bars"></div>
           </article>
           <article class="panel">
-            <div class="panel-title"><div><p class="eyebrow">TOP PRIORITY</p><h3>우선점검 3개 권역</h3></div></div>
+            <div class="panel-title"><div><p class="eyebrow">PRIORITY WATCHLIST</p><h3>우선점검 3개 권역</h3></div></div>
             <div id="topRegions" class="top-regions"></div>
           </article>
         </div>
         <article class="table-panel">
-          <div class="panel-title"><div><p class="eyebrow">AUDIT VIEW</p><h3>구성요소 함께 보기</h3></div></div>
+          <div class="panel-title"><div><p class="eyebrow">RISK COMPONENT MATRIX</p><h3>구성요소 함께 보기</h3></div><span class="classification">PUBLIC DATA</span></div>
           <div class="table-wrap"><table><thead><tr><th>순위</th><th>지방청</th><th>통합</th><th>인력</th><th>감염병</th><th>물자</th><th>등급</th></tr></thead><tbody id="riskTable"></tbody></table></div>
         </article>
       </section>
 
       <section id="method" class="section method">
-        <div class="section-heading"><div><p class="eyebrow">DECISION BOUNDARY</p><h2>모델이 결정하지 않습니다</h2></div></div>
+        <div class="section-heading"><div><p class="eyebrow">HUMAN-IN-THE-LOOP PROTOCOL</p><h2>모델이 결정하지 않습니다</h2></div></div>
         <div class="principles">
           <article><span>01</span><h3>우선순위화</h3><p>점수는 자원 배분을 확정하지 않고 검토 순서만 제안합니다.</p></article>
           <article><span>02</span><h3>근거 분해</h3><p>통합점수와 인력·감염병·물자 구성요소를 함께 보고합니다.</p></article>
