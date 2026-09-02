@@ -2,6 +2,15 @@ const number = (value) => Number(value ?? 0).toFixed(1);
 const badgeClass = (grade) => grade === "위험" ? "danger" : grade === "주의" ? "caution" : "normal";
 const gradeFromScore = (score) => score >= 60 ? "위험" : score >= 35 ? "주의" : "정상";
 
+function updateClock() {
+  const time = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).format(new Date());
+  document.querySelector("#systemClock").textContent = `KST ${time}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
 const officeToProvince = {
   서울: ["서울특별시"], 부산울산: ["부산광역시", "울산광역시"],
   대구경북: ["대구광역시", "경상북도"], 경인: ["경기도"], 경기북부: ["경기도"],
