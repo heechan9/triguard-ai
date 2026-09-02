@@ -1,6 +1,17 @@
 const number = (value) => Number(value ?? 0).toFixed(1);
 const badgeClass = (grade) => grade === "위험" ? "danger" : grade === "주의" ? "caution" : "normal";
 const gradeFromScore = (score) => score >= 60 ? "위험" : score >= 35 ? "주의" : "정상";
+const clamp = (value) => Math.max(0, Math.min(100, value));
+let baselineSnapshot;
+let mapGeometry;
+
+const scenarioPresets = {
+  baseline: { manpower: 0, disease: 0, material: 0, response: 0, label: "BASELINE" },
+  outbreak: { manpower: 8, disease: 30, material: 5, response: 8, label: "OUTBREAK" },
+  manpower: { manpower: 28, disease: 4, material: 7, response: 6, label: "MANPOWER" },
+  supply: { manpower: 6, disease: 0, material: 32, response: 7, label: "SUPPLY" },
+  compound: { manpower: 24, disease: 30, material: 28, response: 10, label: "COMPOUND" },
+};
 
 function updateClock() {
   const time = new Intl.DateTimeFormat("ko-KR", {
@@ -110,7 +121,85 @@ function render(snapshot, geojson) {
   renderMap(snapshot, geojson);
 }
 
-loadData().then(([snapshot, geojson]) => render(snapshot, geojson)).catch((error) => {
+function simulationInputs() {
+  return {
+    manpower: Number(document.querySelector("#manpowerInput").value),
+    disease: Number(document.querySelector("#diseaseInput").value),
+    material: Number(document.querySelector("#materialInput").value),
+    response: Number(document.querySelector("#responseInput").value),
+  };
+}
+
+function simulateRow(row, inputs) {
+  const component = (key, delta) => {
+    const baseline = Number(row[key]);
+    return clamp(baseline + delta * (0.65 + baseline / 200));
+  };
+  const manpower = component("인력Risk", inputs.manpower);
+  const disease = component("감염병DC", inputs.disease);
+  const material = component("물자Risk", inputs.material);
+  const componentDelta = .35 * (manpower - Number(row.인력Risk))
+    + .40 * (disease - Number(row.감염병DC))
+    + .25 * (material - Number(row.물자Risk));
+  const responseEffect = inputs.response * (.5 + Number(row.통합Risk) / 200);
+  const integrated = clamp(Number(row.통합Risk) + componentDelta - responseEffect);
+  return { ...row, 인력Risk: manpower, 감염병DC: disease, 물자Risk: material, 통합Risk: integrated, 위험등급: gradeFromScore(integrated), baselineRisk: Number(row.통합Risk) };
+}
+
+function updateSimulation() {
+  if (!baselineSnapshot || !mapGeometry) return;
+  const inputs = simulationInputs();
+  const regions = baselineSnapshot.regions.map((row) => simulateRow(row, inputs)).sort((a, b) => b.통합Risk - a.통합Risk);
+  const summary = {
+    regions: regions.length,
+    danger: regions.filter((row) => row.위험등급 === "위험").length,
+    caution: regions.filter((row) => row.위험등급 === "주의").length,
+    normal: regions.filter((row) => row.위험등급 === "정상").length,
+  };
+  const simulated = { ...baselineSnapshot, regions, summary };
+  const top = regions[0];
+  const deltas = regions.map((row) => row.통합Risk - row.baselineRisk);
+  const average = regions.reduce((sum, row) => sum + Number(row.통합Risk), 0) / regions.length;
+  const topDelta = top.통합Risk - top.baselineRisk;
+  const signed = (value) => `${value >= 0 ? "+" : ""}${number(value)}`;
+  document.querySelector("#simTopScore").textContent = number(top.통합Risk);
+  document.querySelector("#simTopDelta").textContent = signed(topDelta);
+  document.querySelector("#simTopDelta").className = topDelta > 0 ? "positive" : topDelta < 0 ? "negative" : "";
+  document.querySelector("#simTopRegion").textContent = `${top.지방청} · ${top.위험등급}`;
+  document.querySelector("#simElevated").textContent = `${summary.danger + summary.caution}개`;
+  document.querySelector("#simAverage").textContent = number(average);
+  document.querySelector("#simMaxDelta").textContent = signed(Math.max(...deltas.map(Math.abs)));
+  const changed = Object.values(inputs).some((value) => value !== 0);
+  document.querySelector("#simulationState").textContent = changed ? "SIMULATION ACTIVE" : "BASELINE";
+  ["manpower", "disease", "material", "response"].forEach((key) => {
+    document.querySelector(`#${key}Output`).textContent = `${inputs[key] >= 0 ? "+" : ""}${inputs[key]}`;
+  });
+  render(simulated, mapGeometry);
+}
+
+function setPreset(name) {
+  const preset = scenarioPresets[name];
+  ["manpower", "disease", "material", "response"].forEach((key) => {
+    document.querySelector(`#${key}Input`).value = preset[key];
+  });
+  updateSimulation();
+}
+
+document.querySelector("#scenarioPreset").addEventListener("change", (event) => setPreset(event.target.value));
+document.querySelectorAll("#simulatorForm input[type='range']").forEach((input) => input.addEventListener("input", () => {
+  document.querySelector("#scenarioPreset").value = "baseline";
+  updateSimulation();
+}));
+document.querySelector("#resetSimulation").addEventListener("click", () => {
+  document.querySelector("#scenarioPreset").value = "baseline";
+  setPreset("baseline");
+});
+
+loadData().then(([snapshot, geojson]) => {
+  baselineSnapshot = snapshot;
+  mapGeometry = geojson;
+  updateSimulation();
+}).catch((error) => {
   document.querySelector("#generatedAt").textContent = "결과 스냅샷을 불러오지 못했습니다.";
   console.error(error);
 });
