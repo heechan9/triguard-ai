@@ -16,3 +16,6 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/web-security.test.cjs
+      - run: python scripts/build_public_catalog.py
+      - run: python -m unittest discover -s tests -p 'test_public_catalog.py' -v
+      - run: node --check public-data-demo/app.js

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "source_commit": "d4167ffe981aab601c72259b288100911d172037",
+  "scope": "Civilian public-health and population file metadata only",
+  "files": [
+    {
+      "file": "질병관리청_법정감염병 표본감시_통계_급성호흡기감염증.csv",
+      "publisher": "질병관리청",
+      "bytes": 11849,
+      "sha256": "b973e95589303474b38ef3ca75b5b1845b921b7ddb25f5f4e74996f748d73624",
+      "source_status": "파일명 기반 기관 표시 · 개별 원문 URL 미확인",
+      "freshness": "최신성 미검증"
+    },
+    {
+      "file": "질병관리청_법정감염병 표본감시_통계_인플루엔자.csv",
+      "publisher": "질병관리청",
+      "bytes": 1443,
+      "sha256": "686fa8505dd45ef36146470563572cfe76b7c94e3fd9a4efa55e20ce4e563c32",
+      "source_status": "파일명 기반 기관 표시 · 개별 원문 URL 미확인",
+      "freshness": "최신성 미검증"
+    },
+    {
+      "file": "질병관리청_지역별 감염병 발생현황(질병별 연도별 월별 기간별)통계_지역별.csv",
+      "publisher": "질병관리청",
+      "bytes": 99216,
+      "sha256": "96b3316830a10b1f7a5267ab6839b1bf08ef731bd512f86fa139a016d7e97110",
+      "source_status": "파일명 기반 기관 표시 · 개별 원문 URL 미확인",
+      "freshness": "최신성 미검증"
+    },
+    {
+      "file": "질병관리청_질병별 감염병 발생현황 (연도별 월별 기간별) 통계.csv",
+      "publisher": "질병관리청",
+      "bytes": 3637,
+      "sha256": "73971e0f8965628eaa28984b2dd1f3e49b6e59b788ef1189cb42eaf5c726d5fd",
+      "source_status": "파일명 기반 기관 표시 · 개별 원문 URL 미확인",
+      "freshness": "최신성 미검증"
+    },
+    {
+      "file": "행정안전부_지역별 연령별 주민등록 인구현황_월간.csv",
+      "publisher": "행정안전부",
+      "bytes": 8221,
+      "sha256": "7c96d7bc6c2d1db6d5bb4553d74877648639d31287532ba77c7dc8754cc4a779",
+      "source_status": "파일명 기반 기관 표시 · 개별 원문 URL 미확인",
+      "freshness": "최신성 미검증"
+    }
+  ]
+}
