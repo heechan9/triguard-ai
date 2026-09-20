@@ -37,5 +37,15 @@ def build():
 if __name__ == '__main__':
     output = ROOT / 'public-statistics' / 'data' / 'statistics.json'
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(build(), ensure_ascii=False, indent=2) + '\n')
+    snapshot = build()
+    output.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2) + '\n')
+    downloads = ROOT / 'public-statistics' / 'downloads'
+    downloads.mkdir(exist_ok=True)
+    fields = ('처분인원', '현역', '보충역', '전시근로역', '병역면제', '재신체검사')
+    for year in sorted({r['year'] for r in snapshot['rows']}):
+        with (downloads / f'triguard-statistics-{year}.csv').open('w', encoding='utf-8-sig', newline='') as stream:
+            writer = csv.writer(stream)
+            writer.writerow(['연도', '지방청', *fields])
+            writer.writerows([r['year'], r['office'], *(r['values'][f] for f in fields)]
+                             for r in snapshot['rows'] if r['year'] == year)
     print(output.relative_to(ROOT))
