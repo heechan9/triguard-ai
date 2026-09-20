@@ -234,7 +234,8 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 .compact-source summary {cursor:pointer;color:var(--cyan);font-weight:700;padding:10px 0;}
 .source-hash {overflow-wrap:anywhere;}
 #reportPreview {margin:30px 6vw;overflow-wrap:anywhere;}
-#reportPreview table {width:100%;font-size:12px;}
+#reportPreview table {width:100%;font-size:12px;table-layout:fixed;}
+#reportPreview th,#reportPreview td {white-space:normal;overflow-wrap:anywhere;}
 @media print {
  @page {size:A4;margin:15mm;}
  body {background:white!important;color:black!important;}
