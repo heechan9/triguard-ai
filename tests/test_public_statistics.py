@@ -92,3 +92,27 @@ class AgencySourceExport(unittest.TestCase):
                     self.assertEqual(int(d['rows'][0][1]), d['source_rows'])
                 self.assertNotIn('대표자', d['columns'])
                 self.assertNotIn('계약기관담당자명', d['columns'])
+
+class AgencyMetadataReview(unittest.TestCase):
+    def test_supplier_addresses_use_explicit_province_only(self):
+        from scripts.agency_metadata import supplier_regions
+        result = supplier_regions(['대표업체주소'], [['강원특별자치도 강릉시'], ['전북특별자치도 전주시'], ['경상북도 구미시'], ['충남대전시'], ['용산구'], ['']])
+        self.assertEqual(result['counts']['강원도'], 1)
+        self.assertEqual(result['counts']['전라북도'], 1)
+        self.assertEqual(result['counts']['경상북도'], 1)
+        self.assertEqual(result['unclassified'], 3)
+        self.assertEqual(sum(result['counts'].values()) + result['unclassified'], result['total'])
+
+    def test_real_supplier_partition_and_health_metadata(self):
+        from scripts.export_agency_statistics import generate
+        datasets = generate()['datasets']
+        d = next(d for d in datasets if 'supplier_regions' in d)
+        regions = d['supplier_regions']
+        self.assertEqual(sum(regions['counts'].values()) + regions['unclassified'], d['source_rows'])
+        self.assertEqual(regions['unclassified'], 20)
+        self.assertEqual(regions['counts']['대구광역시'], 1333)
+        self.assertEqual(regions['counts']['경상북도'], 1492)
+        for d in datasets:
+            if d['source'].startswith('질병관리청'):
+                self.assertIn('미확인', d['metadata']['status'])
+                self.assertIn('원자료', d['columns'][0])

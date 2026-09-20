@@ -24,3 +24,8 @@ test('zero is present and null is missing',()=>{
  const changed=structuredClone(data);const row=changed.rows.find(r=>r.year===2025&&r.office==='대구경북');row.values.현역=0;
  assert.equal(review('경상북도',changed).checks[0].ok,true);row.values.현역=null;assert.equal(review('경상북도',changed).checks[0].ok,false);
 });
+test('DAPA supplier-location records follow both selected provinces',()=>{
+ const v=review(); assert.deepEqual(v.supplierRows,[{region:'대구광역시',count:1333},{region:'경상북도',count:1492}]);
+ assert.equal(review('경기도').supplierRows[0].count,13766);
+ assert.equal(review('경상북도',data,[]).supplierRows[0].count,null);
+});
