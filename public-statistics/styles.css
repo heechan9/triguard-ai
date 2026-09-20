@@ -190,3 +190,22 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 #regionalHealth td,#regionalHealth th {white-space:nowrap}
 #integratedAdvice li {margin-bottom:14px;line-height:1.7}
 @media(max-width:780px){.integrated-cards,.review-checks{grid-template-columns:1fr}.integrated-cards .data-guide{margin-bottom:0}.dashboard-tabs{margin-top:24px}}
+/* Keep all three agencies in the selected-region card and scope each tab. */
+.map-detail .integrated-cards {display:block}
+.map-detail .office-detail a {display:block;margin:12px 0;font-size:13px}
+.region-context {border-left:3px solid var(--cyan);padding:12px 16px;background:var(--panel);line-height:1.7}
+.dashboard-tabs {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
+.dashboard-tabs button {white-space:normal;padding:12px 8px;font-size:14px}
+.regional-values {width:100%;table-layout:fixed}
+.regional-values th,.regional-values td {white-space:normal !important;overflow-wrap:anywhere;padding:10px 8px}
+.regional-values th {text-align:left}
+.regional-values td {text-align:right}
+.regional-values caption {text-align:left;padding:12px 0;color:var(--muted)}
+.regional-analysis {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.regional-mma {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.regional-mma div {border:1px solid var(--line);padding:12px}
+.regional-mma dt {color:var(--muted);font-size:13px}
+.regional-mma dd {margin:8px 0 0}
+.all-source {padding:20px;border:1px solid var(--line);margin:24px 0}
+.all-source>summary {cursor:pointer;color:var(--cyan)}
+@media(max-width:720px){.regional-analysis{grid-template-columns:1fr}.dashboard-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.regional-values th,.regional-values td{font-size:13px}.all-source{padding:12px}}
