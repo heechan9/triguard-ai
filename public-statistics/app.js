@@ -11,7 +11,8 @@ const offices = {
 };
 let data;
 let selected = '서울특별시';
-const count = (v) => Number(v).toLocaleString('ko-KR');
+const validCount = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+const count = (v) => validCount(v) ? v.toLocaleString('ko-KR') : '자료 없음';
 const yearRows = () => data.rows.filter((r) => r.year === Number($('#year').value));
 
 function selectRegion(name) {
@@ -28,6 +29,29 @@ function selectRegion(name) {
   const rows = yearRows().filter((r) => selectedOffices.includes(r.office));
   $('#mapDetail').innerHTML = `<p class="eyebrow">SELECTED JURISDICTION</p><h3>${relatedProvinces.map(esc).join(' · ')}</h3><p>선택 지역: ${esc(name)}</p>${relatedProvinces.length > 1 ? '<p>같은 지방청 관할 지역을 함께 표시합니다. 아래 수치는 관할 전체 통계이며 지역별로 중복 합산하지 않습니다.</p>' : ''}<p>${esc($('#year').value)}년 · 지방청 관할 전체 통계 · 단위: 명</p>` +
     (rows.length ? rows.map((r) => `<section class="office-detail"><h4>${esc(r.office)} 지방청</h4><dl>${fields.map((f) => `<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}</dd></div>`).join('')}</dl></section>`).join('') : '<p>이 연도의 해당 지방청 자료가 없습니다.</p>');
+  renderDataGuide(name, selectedOffices, relatedProvinces, rows);
+}
+
+function renderDataGuide(name, selectedOffices, relatedProvinces, rows) {
+  const missingOffices = selectedOffices.filter((office) => !rows.some((r) => r.office === office));
+  const missingFields = rows.flatMap((r) => fields.filter((field) => !validCount(r.values[field])).map((field) => `${r.office} ${field}`));
+  const missing = [...missingOffices.map((office) => `${office} 지방청 행`), ...missingFields];
+  const completeness = !selectedOffices.length ? '연결된 지방청 정보가 없습니다.' : missing.length
+    ? `확인 필요: ${missing.join(', ')}. 누락값은 0명으로 해석하지 마세요.`
+    : `선택 연도의 ${selectedOffices.length}개 지방청 · ${rows.length * fields.length}개 항목에 값이 있습니다. 원자료 자체의 정확성을 보증하는 검증은 아닙니다.`;
+  const scope = relatedProvinces.length > 1
+    ? `${relatedProvinces.join(' · ')}의 통합 관할 수치입니다. 각 시·도의 개별 수치로 나누거나 중복 합산하지 마세요.`
+    : selectedOffices.length > 1
+      ? `${selectedOffices.join(' · ')} 지방청을 각각 표시합니다. 시·도 단위 합계를 새로 산출하지 않습니다.`
+      : `${selectedOffices.join(' · ')} 지방청 단위 수치입니다. 지도는 자료 탐색을 위한 지역 구분입니다.`;
+  const sourceUrl = 'https://github.com/heechan9/triguard-ai/blob/main/data/' + encodeURIComponent(data.source);
+  $('#dataGuide').innerHTML = `<div class="panel-title"><div><p class="eyebrow">DATA CHECK</p><h3 id="dataGuideTitle">자료 확인 안내</h3></div><span>${esc(name)} · ${esc($('#year').value)}년</span></div><div class="data-guide-grid">
+    <section><h4>자료 기준일</h4><p>선택 통계 연도: ${esc($('#year').value)}년</p><p>${esc(data.date_note)}</p><p>실시간 자료가 아니므로 최신 공식 자료와 비교해 확인하세요.</p></section>
+    <section><h4>누락 여부</h4><p>${esc(completeness)}</p></section>
+    <section><h4>관할 범위</h4><p>${esc(scope)}</p></section>
+    <section><h4>원자료 확인</h4><p>연도·지방청·열 이름과 단위(명)를 대조하세요. 공식 배포 페이지와 이용조건은 별도 확인이 필요합니다.</p><a class="button ghost" href="${esc(sourceUrl)}">원본 CSV 열기</a></section>
+  </div>`;
+  $('#dataGuide').hidden = false;
 }
 
 function drawMap(geo) {

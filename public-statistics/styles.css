@@ -163,3 +163,12 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 .boundary a {text-decoration:underline}.boundary .button {display:inline-block}.boundary p{overflow-wrap:anywhere}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:480px){.filters{align-items:stretch}.filters label{flex:1;justify-content:space-between}.filters select{min-width:0}.nav-links{display:flex;gap:12px;font-size:11px}.nav-links a:last-child{display:none}.map-detail{padding:18px}.map-detail dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.data-guide{padding:24px;margin:24px 0;border:1px solid var(--line-strong);background:var(--panel)}
+.data-guide .panel-title>span{font-size:13px;color:var(--muted)}
+.data-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.data-guide-grid section{padding:18px;border:1px solid var(--line);min-width:0}
+.data-guide h4{margin:0 0 10px;color:var(--ink)}
+.data-guide p{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.data-guide .button{display:inline-block}
+@media(max-width:720px){.data-guide{padding:18px}.data-guide-grid{grid-template-columns:1fr;gap:12px}}
