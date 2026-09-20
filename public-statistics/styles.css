@@ -209,3 +209,9 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 .all-source {padding:20px;border:1px solid var(--line);margin:24px 0}
 .all-source>summary {cursor:pointer;color:var(--cyan)}
 @media(max-width:720px){.regional-analysis{grid-template-columns:1fr}.dashboard-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.regional-values th,.regional-values td{font-size:13px}.all-source{padding:12px}}
+.research-grid {display:flex;gap:24px;flex-wrap:wrap}
+.research-kpi {border-left:3px solid var(--cyan);padding:4px 18px;margin:16px 0}
+.research-kpi strong {font-size:34px;color:var(--cyan);font-variant-numeric:tabular-nums}
+.research-kpi small {font-size:14px;color:var(--muted)}
+#researchScore li,#researchResponse li {line-height:1.7;margin-bottom:10px}
+#researchScore summary {cursor:pointer}

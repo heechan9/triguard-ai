@@ -126,3 +126,30 @@ class OfficialAriSchema(unittest.TestCase):
         from scripts.agency_metadata import health_metadata
         with self.assertRaisesRegex(ValueError, 'ARI source changed'):
             health_metadata('급성호흡기.csv', ['unknown']*11, [], 'wrong')
+
+class ArchivedResearchScores(unittest.TestCase):
+    def setUp(self):
+        self.snapshot = json.loads((ROOT/'web/data/risk_snapshot.json').read_text())
+
+    def test_original_results_preserved(self):
+        from scripts.export_research_scores import generate, FIELDS
+        result = generate()
+        self.assertEqual(result['generated_at'], self.snapshot['generated_at'])
+        for original, exported in zip(self.snapshot['regions'], result['regions']):
+            for field in ['지방청', '위험등급'] + FIELDS:
+                self.assertEqual(original[field], exported[field])
+
+    def test_inconsistent_result_rejected(self):
+        from scripts.export_research_scores import validate
+        for field, value in [('통합Risk', 99), ('인력Risk', None), ('물자Risk', float('nan')), ('위험등급', 'unknown')]:
+            with self.subTest(field=field):
+                snapshot = copy.deepcopy(self.snapshot)
+                snapshot['regions'][0][field] = value
+                with self.assertRaises(ValueError):
+                    validate(snapshot)
+
+    def test_missing_office_rejected(self):
+        from scripts.export_research_scores import validate
+        self.snapshot['regions'].pop()
+        with self.assertRaisesRegex(ValueError, 'coverage'):
+            validate(self.snapshot)
