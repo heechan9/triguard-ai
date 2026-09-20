@@ -10,6 +10,7 @@ const offices = {
   강원도:['강원','강원영동'], 충청북도:['충북'], 전라북도:['전북'], 경상남도:['경남'], 제주특별자치도:['제주'],
 };
 let data;
+let researchScores = null;
 let validationReport = null;
 async function loadValidationReport() {
   const panel = $('#validationSummary');
@@ -51,6 +52,7 @@ function selectRegion(name) {
     (rows.length ? rows.map((r) => `<section class="office-detail"><h4>${esc(r.office)} 지방청</h4><dl>${fields.map((f) => `<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}</dd></div>`).join('')}</dl></section>`).join('') : '<p>이 연도의 해당 지방청 자료가 없습니다.</p>');
   renderDataGuide(name, selectedOffices, relatedProvinces, rows);
   renderIntegrated();
+  renderResearch();
 }
 
 function renderDataGuide(name, selectedOffices, relatedProvinces, rows) {
@@ -247,3 +249,34 @@ document.addEventListener('click', event => {
   const tab = document.getElementById('tab-' + button.dataset.openTab);
   if (tab) { activateTab(tab); tab.focus(); }
 });
+
+function renderResearch() {
+  if (!researchScores || !data) return;
+  const rows = researchScores.regions.filter(r=>(offices[selected] || []).includes(r.지방청));
+  const date = researchScores.generated_at.slice(0,10);
+  const scoreCards = rows.map(r=>`<section class="research-kpi"><h4>${esc(r.지방청)} 지방청</h4><strong>${r.통합Risk.toFixed(2)}<small> / 100</small></strong><p>기존 분류: ${esc(r.위험등급)}</p></section>`).join('') || '<p>이 지역의 기존 연구 결과가 없습니다.</p>';
+  $('#researchScore').innerHTML = `<p class="eyebrow">TRIGUARD RESEARCH INDEX</p><h3>${esc(selected)} · 통합 리스크 스코어</h3><div class="research-grid">${scoreCards}</div><p>인력 40% + 감염병 40% + 물자 20% · 생성일 ${esc(date)} · 고정 연구 스냅샷</p><p>병무청 선택 연도(${$('#year').value}년)와 별개입니다. 실제 위험 확률이나 검증된 예측값이 아닙니다.</p><details><summary>계산 근거와 한계</summary><ul>${researchScores.limitations.map(l=>`<li>${esc(l)}</li>`).join('')}</ul><p>기존 분류 경계: 정상 35 미만 · 주의 35 이상 60 미만 · 위험 60 이상. 연구자가 설정한 기준입니다.</p><a href="https://github.com/heechan9/triguard-ai/blob/main/web/data/risk_snapshot.json">기존 결과 원본</a></details>`;
+  $('#mapRisk').innerHTML = `<h3>통합 리스크 · 기존 연구 결과</h3>${scoreCards}<p>생성일 ${esc(date)} · 고정 스냅샷 · 실제 위험 확률 아님</p>`;
+  $('#researchAnalysis').innerHTML = rows.map(r=>`<section class="office-detail"><h4>${esc(r.지방청)} · 기존 점수 구성</h4><dl class="regional-mma">${[['인력Risk','인력',.4],['감염병DC','감염병',.4],['물자Risk','물자(전국 공통)',.2]].map(([key,label,w])=>`<div><dt>${label} · ${w*100}%</dt><dd>${r[key].toFixed(2)}</dd><p>가중 기여 ${(r[key]*w).toFixed(2)}점</p></div>`).join('')}</dl></section>`).join('') + '<p>기존 계산 결과의 구성 설명입니다. 미확인 단위·기간을 포함해 지표 타당성은 추가 검증이 필요합니다.</p>';
+  $('#responseTitle').textContent = `${selected} · 대응 추천 · 행정 점검`;
+  $('#researchResponse').innerHTML = rows.map(r=>{
+    const factors = [{name:'병무 행정',value:r.인력Risk*.4,tasks:['판정검사 인원 변화와 실제 입영 인원 변화를 구분해 원자료를 확인하세요.','예약·안내·서류 처리 과정의 지연 여부를 담당 부서의 실제 운영 기록으로 확인하세요.']},{name:'보건 정보',value:r.감염병DC*.4,tasks:['질병청 최신 공식 발생 동향과 자료 기간·단위를 먼저 대조하세요.','해당 지역 보건기관의 현행 예방 안내를 확인하고 대민 안내에 반영할지 검토하세요.']},{name:'조달 행정',value:r.물자Risk*.2,tasks:['계약 변경 차수와 중복 기록을 확인하고 계약방법별 집계를 검토하세요.','전국 조달 지표와 업체 소재지별 기록을 구분해 설명하세요.']}].sort((a,b)=>b.value-a.value);
+    return `<section class="office-detail"><h4>${esc(r.지방청)} · 기존 분류 ${esc(r.위험등급)}</h4><p>기존 가중 기여가 가장 큰 항목: ${factors[0].name}. 아래는 담당자가 확인할 일반 업무 안내이며 자동 조치 지시가 아닙니다.</p>${factors.map(f=>`<h4>${f.name} 확인</h4><ul>${f.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`).join('')}</section>`;
+  }).join('');
+}
+async function loadResearch() {
+  $('#scoreRetry').hidden = true;
+  try {
+    const response = await fetch('/data/research_scores.json');
+    if (!response.ok) throw new Error('연구 결과 응답 오류');
+    const snapshot = await response.json();
+    if (snapshot.regions?.length !== 14 || snapshot.regions.some(r=>!['인력Risk','감염병DC','물자Risk','통합Risk'].every(k=>typeof r[k]==='number'&&Number.isFinite(r[k])&&r[k]>=0&&r[k]<=100))) throw new Error('연구 결과 형식 오류');
+    researchScores = snapshot; renderResearch();
+  } catch (e) {
+    researchScores = null;
+    $('#researchScore').innerHTML = '<h3>통합 리스크 스코어</h3><p>기존 연구 결과를 불러오지 못했습니다. 0점으로 대체하지 않습니다.</p>';
+    $('#scoreRetry').hidden = false;
+  }
+}
+$('#scoreRetry').addEventListener('click',loadResearch);
+loadResearch();
