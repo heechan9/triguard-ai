@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/test_data_review.cjs
+      - run: node --test tests/test_data_review.cjs tests/test_statistics_tools.cjs
       - uses: actions/upload-artifact@v4
         with:
           name: public-statistics-validation
