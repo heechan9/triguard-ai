@@ -51,5 +51,41 @@
   $('#compareField').addEventListener('change',window.renderStatisticsWorkbench);
   $('#agencyExport').addEventListener('click',()=>{const d=agencyData[Number($('#agencyDataset').value)];if(!d)return;const q=$('#agencySearch').value.trim().toLocaleLowerCase('ko-KR');const rows=d.rows.filter(r=>r.some(v=>String(v).toLocaleLowerCase('ko-KR').includes(q)));download('agencyDownload',[d.columns,...rows],'triguard-agency-query.csv');$('#agencyDownload').click();});
   $('#archiveExport').addEventListener('click',()=>{if(!researchScores){$('#archiveStatus').textContent='기존 연구 결과를 먼저 불러와 주세요.';return;}const keys=['지방청','인력Risk','감염병DC','물자Risk','통합Risk','위험등급'];download('archiveDownload',[['생성일','자료 구분',...keys],...researchScores.regions.map(r=>[researchScores.generated_at,'보관 연구 결과 · 재계산 아님',...keys.map(k=>r[k])])],'triguard-archived-research.csv');$('#archiveDownload').click();$('#archiveStatus').textContent='기존 연구 결과 CSV를 준비했습니다. 기준일과 자료 구분이 포함됩니다.';});
+
+  let inspectedSource='';
+  window.renderAgencyInspector=()=>{
+    const d=agencyData[Number($('#agencyDataset').value)];
+    const selector=$('#agencyNumericColumn');
+    if(!d){inspectedSource='';selector.disabled=true;selector.innerHTML='';$('#agencyNumericSummary').textContent='기관 자료를 불러온 뒤 확인할 수 있습니다.';$('#agencyNumericChart').innerHTML='';$('#agencyNumericNote').textContent='';return;}
+    if(inspectedSource!==d.source){
+      inspectedSource=d.source;
+      const indices=d.columns.map((_,i)=>i).filter(i=>d.rows.some(r=>StatisticsTools.numeric(r[i])!==null));
+      selector.innerHTML=indices.map(i=>`<option value="${i}">${esc(d.columns[i])}</option>`).join('');
+      const preferred=indices.find(i=>i>=(d.metadata?.unit?2:1));
+      if(preferred!==undefined)selector.value=String(preferred);
+      selector.disabled=indices.length===0;
+    }
+    const query=$('#agencySearch').value.trim().toLocaleLowerCase('ko-KR');
+    const rows=d.rows.filter(r=>r.some(v=>String(v).toLocaleLowerCase('ko-KR').includes(query)));
+    $('#agencyNumericNote').textContent=(d.note||'')+' '+(d.metadata?.note||'')+' 검색 결과의 처음 20행을 원본 순서로 표시합니다. 전국 합계·소계·서로 다른 집계 항목이 섞일 수 있어 평균이나 합계는 계산하지 않습니다.';
+    if(selector.disabled){$('#agencyNumericSummary').textContent='숫자로 해석할 수 있는 열이 없습니다.';$('#agencyNumericChart').innerHTML='';return;}
+    const index=Number(selector.value),stats=StatisticsTools.summary(rows,index);
+    $('#agencyNumericSummary').textContent=`${d.columns[index]} · 검색 결과 ${rows.length}행 · 수치 ${stats.count}개 · 빈 셀 ${stats.missing}개 · 비수치 ${stats.invalid}개`;
+    const display=rows.slice(0,20).map((r,i)=>[d.metadata?.unit?`${r[0]}년 ${r[1]}주`:r[0]||`원본 행 ${i+1}`,r[index]]);
+    $('#agencyNumericChart').innerHTML=bars(display,0,1);
+  };
+  $('#agencyNumericColumn').addEventListener('change',window.renderAgencyInspector);
+  window.renderSourceInventory=()=>{
+    const sources=data?[{source:data.source,sha256:data.source_sha256,source_rows:data.rows.length,period_note:data.date_note,main:true},...agencyData]:agencyData;
+    const rows=sources.map(d=>{
+      const matched=validationReport?.status==='passed'&&(d.main?validationReport.source_sha256===d.sha256&&validationReport.row_count===d.source_rows:validationReport.agency_sources?.some(r=>r.source===d.source&&r.sha256===d.sha256&&r.source_rows===d.source_rows));
+      return [d.source,d.source_rows,d.period_note||d.metadata?.period||'공통 기준일 미확인',d.metadata?.unit||(d.extra_kind&&d.extra_kind!=='catalog'?'명':'자료별 원문 참조'),matched?'원본 식별정보 일치':'검증 미확인',d.sha256];
+    });
+    const headers=['자료','원본 자료 행 수','기간 안내','단위 안내','출처 대조','SHA-256'];
+    $('#sourceInventory').innerHTML=`<p>${sources.length}/12종 로드</p><table><caption>기관 자료별 연결·기준일·출처 대조</caption><thead><tr>${headers.slice(0,5).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.slice(0,5).map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    download('sourceInventoryDownload',[headers,...rows],'triguard-source-inventory.csv');
+  };
+  window.renderAgencyInspector();
+  window.renderSourceInventory();
   window.renderStatisticsWorkbench();
 })();
