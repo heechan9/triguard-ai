@@ -154,11 +154,11 @@ function renderAgency() {
   const pages = Math.max(1, Math.ceil(rows.length / agencyPageSize));
   agencyPage = Math.min(agencyPage, pages - 1);
   $('#agencyTitle').textContent = d.source.replace(/\.csv$/, '');
-  $('#agencyNote').textContent = d.note + (d.metadata ? ' ' + d.metadata.note : '');
+  $('#agencyNote').textContent = (d.metadata?.unit ? '공식 조회와 대조한 열 제목입니다. ' : d.note + ' ') + (d.metadata ? d.metadata.note : '');
   $('#agencySummary').textContent = `원본 ${d.source_rows.toLocaleString('ko-KR')}행 · 조회 표 ${d.rows.length.toLocaleString('ko-KR')}행 · 검색 결과 ${rows.length.toLocaleString('ko-KR')}행`;
   $('#agencySource').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/' + encodeURIComponent(d.source);
   $('#agencySource').hidden = false;
-  $('#agencyMetadata').innerHTML = d.metadata ? `<p>${esc(d.metadata.status)}</p><a href="${esc(d.metadata.reference_url)}">질병청 공식 통계 화면 · 보관 CSV와 선택 조건은 별도 확인</a>` : d.supplier_regions ? `<p>${esc(d.supplier_regions.note)} 미분류 ${count(d.supplier_regions.unclassified)}행 / 전체 ${count(d.supplier_regions.total)}행</p>` : '<p>원본에 지역 주소 열이 없어 지역별로 배분하지 않습니다.</p>';
+  $('#agencyMetadata').innerHTML = d.metadata ? `<p>${esc(d.metadata.status)}</p>${d.metadata.evidence_url ? `<p><a href="${esc(d.metadata.evidence_url)}">공식 수치 대조 기록 확인</a></p>` : ''}<a href="${esc(d.metadata.reference_url)}">질병청 공식 통계 화면 · 보관 CSV와 선택 조건은 별도 확인</a>` : d.supplier_regions ? `<p>${esc(d.supplier_regions.note)} 미분류 ${count(d.supplier_regions.unclassified)}행 / 전체 ${count(d.supplier_regions.total)}행</p>` : '<p>원본에 지역 주소 열이 없어 지역별로 배분하지 않습니다.</p>';
   $('#agencyHead').innerHTML = '<tr>' + d.columns.map(c => `<th scope="col">${esc(c)}</th>`).join('') + '</tr>';
   $('#agencyBody').innerHTML = rows.slice(agencyPage * agencyPageSize, (agencyPage + 1) * agencyPageSize).map(r => '<tr>' + r.map(v => `<td>${v === '' ? '<span class="missing">자료 없음</span>' : esc(v)}</td>`).join('') + '</tr>').join('') || `<tr><td colspan="${d.columns.length}">검색 결과가 없습니다.</td></tr>`;
   $('#agencyPage').textContent = `${agencyPage + 1} / ${pages} 페이지 · 페이지당 ${agencyPageSize}행`;
