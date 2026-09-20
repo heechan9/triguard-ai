@@ -59,6 +59,9 @@ function renderYear() {
   const rows = yearRows();
   $('#statisticsTable').innerHTML = rows.map((r) => `<tr><th scope="row">${esc(r.office)}</th>${fields.map((f) => `<td>${count(r.values[f])}</td>`).join('')}</tr>`).join('');
   $('#tableTitle').textContent = `${$('#year').value}년 지방청별 원자료 · 단위: 명`;
+  $('#download').href = `/downloads/triguard-statistics-${$('#year').value}.csv`;
+  $('#download').setAttribute('download', `triguard-statistics-${$('#year').value}.csv`);
+  $('#download').hidden = false;
   selectRegion(selected);
 }
 
@@ -73,7 +76,7 @@ async function load() {
     data = snapshot;
     $('#year').innerHTML = [...new Set(data.rows.map((r) => r.year))].sort((a,b) => b-a).map((y) => `<option>${y}</option>`).join('');
     $('#province').innerHTML = geo.features.map((f) => `<option>${esc(f.properties.name)}</option>`).join('');
-    $('#year').disabled = $('#province').disabled = $('#download').disabled = false;
+    $('#year').disabled = $('#province').disabled = false;
     $('#sourceDate').textContent = data.date_note;
     $('#sourceName').textContent = data.source;
     $('#sourceLink').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/'+encodeURIComponent(data.source);
@@ -89,11 +92,4 @@ async function load() {
 $('#year').addEventListener('change',renderYear);
 $('#province').addEventListener('change',(e) => selectRegion(e.target.value));
 $('#retry').addEventListener('click',load);
-$('#download').addEventListener('click',() => {
-  const rows = [['연도','지방청',...fields],...yearRows().map((r) => [r.year,r.office,...fields.map((f) => r.values[f])])];
-  const csv = '\ufeff'+rows.map((r) => r.map((v) => '"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');
-  const url = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  const a = document.createElement('a'); a.href=url; a.download=`triguard-statistics-${$('#year').value}.csv`; a.click();
-  setTimeout(() => URL.revokeObjectURL(url),1000);
-});
 load();
