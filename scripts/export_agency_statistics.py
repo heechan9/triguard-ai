@@ -24,7 +24,7 @@ def read_rows(path):
 def generate(root=ROOT):
     datasets = []
     for path in sorted((root / 'data').glob('*.csv')):
-        if not path.name.startswith(('방위사업청', '질병관리청')):
+        if not path.name.startswith(('방위사업청', '질병관리청', '행정안전부', '무역안보관리원', '병무청_현역병 지방청별 입영현황_20241231', '병무청_병역면제자')):
             continue
         raw, rows = read_rows(path)
         source_rows = len(rows)
@@ -43,6 +43,21 @@ def generate(root=ROOT):
                 companies = {r[index].strip() for r in records if r[index].strip()}
                 item.update(columns=['집계 항목', '수치'], rows=[['원자료 행 수', str(len(records))], ['서로 다른 업체명 수', str(len(companies))]])
             item['note'] = '공개 CSV의 기록 집계입니다. 변경 계약·반복 참여가 포함될 수 있어 행 수는 고유 계약·업체 수와 다릅니다. 파일명 날짜는 자료 내부의 계약기간을 의미하지 않습니다. 개인 이름과 개별 계약 내용은 표시하지 않습니다.'
+        elif path.name.startswith(('행정안전부', '무역안보관리원', '병무청')):
+            header, records = rows[0], rows[1:]
+            if any(len(r) != len(header) for r in records):
+                raise ValueError(f'Column mismatch: {path.name}')
+            item.update(columns=header, rows=records)
+            source_rows = len(records)
+            item['extra_kind'] = ('population' if path.name.startswith('행정안전부') else 'catalog' if path.name.startswith('무역안보') else 'enlist' if '입영현황' in path.name else 'exempt')
+            item['period_note'] = ('2026년 4월 · 원본 열 제목 기준 · 단위 명' if item['extra_kind']=='population' else '파일명 2026-05-22 · 전국 공통 품목 목록 · 지역별 재고 아님' if item['extra_kind']=='catalog' else '파일명 2024-12-31 · 공식 기준일 별도 확인 · 단위 명')
+            item['note'] = item['period_note'] + '. 병무청 연도 선택으로 이 자료의 기간은 변경되지 않습니다.'
+            if item['extra_kind']=='enlist':
+                duplicate = root/'data/병무청_현역병 지방청별 입영현황.csv'
+                if duplicate.read_bytes() != raw:
+                    raise ValueError('Enlistment duplicate changed; review both sources')
+                item['duplicate_source'] = duplicate.name
+                item['note'] += ' 날짜 없는 입영현황 CSV와 바이트가 같아 한 번만 표시합니다.'
         else:
             width = max(map(len, rows))
             item.update(columns=[f'원자료 {i+1}열' for i in range(width)], rows=[r + ['']*(width-len(r)) for r in rows])
@@ -50,6 +65,6 @@ def generate(root=ROOT):
             item['metadata'] = health_metadata(path.name, item['columns'], item['rows'], item['sha256'])
         item['source_rows'] = source_rows
         datasets.append(item)
-    if len(datasets) != 7:
-        raise ValueError(f'Expected 7 agency sources, got {len(datasets)}')
+    if len(datasets) != 11:
+        raise ValueError(f'Expected 11 agency sources, got {len(datasets)}')
     return {'datasets': datasets, 'scope': '공개 원자료 조회 및 기록 집계'}

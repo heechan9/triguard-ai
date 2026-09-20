@@ -67,7 +67,7 @@ class AgencySourceExport(unittest.TestCase):
 
     def test_all_sources_and_exact_kdca_cells(self):
         import csv, io, hashlib
-        self.assertEqual(len(self.datasets), 7)
+        self.assertEqual(len(self.datasets), 11)
         for d in self.datasets:
             raw = (ROOT/'data'/d['source']).read_bytes()
             self.assertEqual(d['sha256'], hashlib.sha256(raw).hexdigest())
@@ -153,3 +153,14 @@ class ArchivedResearchScores(unittest.TestCase):
         self.snapshot['regions'].pop()
         with self.assertRaisesRegex(ValueError, 'coverage'):
             validate(self.snapshot)
+
+class AdditionalSourcePreservation(unittest.TestCase):
+    def test_original_headers_and_cells(self):
+        from scripts.export_agency_statistics import generate, read_rows
+        extras = [d for d in generate()['datasets'] if 'extra_kind' in d]
+        self.assertEqual(len(extras), 4)
+        for d in extras:
+            raw, rows = read_rows(ROOT/'data'/d['source'])
+            self.assertEqual(d['columns'], rows[0])
+            self.assertEqual(d['rows'], rows[1:])
+            self.assertEqual(d['source_rows'], len(rows)-1)

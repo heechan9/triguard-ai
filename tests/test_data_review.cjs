@@ -29,3 +29,15 @@ test('DAPA supplier-location records follow both selected provinces',()=>{
  assert.equal(review('경기도').supplierRows[0].count,13766);
  assert.equal(review('경상북도',data,[]).supplierRows[0].count,null);
 });
+
+test('Additional sources follow shared jurisdictions, not selected year',()=>{
+ const extras=review().extra;
+ assert.equal(extras.length,4);
+ assert.equal(extras.find(d=>d.extra_kind==='population').selectedRows.length,2);
+ assert.equal(extras.find(d=>d.extra_kind==='exempt').selectedRows.length,1);
+ assert.equal(extras.find(d=>d.extra_kind==='enlist').selectedRows.length,1);
+ assert.equal(extras.find(d=>d.extra_kind==='catalog').selectedRows.length,0);
+ assert.equal(extras.find(d=>d.extra_kind==='catalog').source_rows,1006);
+ assert.deepEqual(review('경기도').extra.find(d=>d.extra_kind==='enlist').selectedRows.map(r=>r[0]),['경 인','경기북부']);
+ assert.deepEqual(review('서울특별시',data,agencies,report,2019).extra,review('서울특별시').extra);
+});
