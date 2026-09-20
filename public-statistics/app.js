@@ -167,6 +167,7 @@ function renderAgency() {
   $('#agencyPage').textContent = `${agencyPage + 1} / ${pages} 페이지 · 페이지당 ${agencyPageSize}행`;
   $('#agencyPrev').disabled = agencyPage === 0;
   $('#agencyNext').disabled = agencyPage >= pages - 1;
+  if (window.renderAgencyInspector) window.renderAgencyInspector();
 }
 async function loadAgencies() {
   $('#agencyRetry').hidden = true;
@@ -228,6 +229,8 @@ function renderIntegrated() {
   advice.push('국외 계약과 입찰 참여 자료에는 주소 열이 없어 전국 집계로 표시합니다.');
   review.extra.forEach(d=>advice.push(`${d.source}: ${d.note}`));
   $('#integratedAdvice').innerHTML = advice.map(a=>`<li>${esc(a)}</li>`).join('');
+  if (window.renderSourceInventory) window.renderSourceInventory();
+  if (!agencyData.length && window.renderAgencyInspector) window.renderAgencyInspector();
 }
 const dashboardTabs = [...document.querySelectorAll('[role="tab"]')];
 function activateTab(tab) {
