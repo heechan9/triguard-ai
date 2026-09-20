@@ -53,6 +53,7 @@ function selectRegion(name) {
   renderDataGuide(name, selectedOffices, relatedProvinces, rows);
   renderIntegrated();
   renderResearch();
+  if (window.renderStatisticsWorkbench) window.renderStatisticsWorkbench();
 }
 
 function renderDataGuide(name, selectedOffices, relatedProvinces, rows) {

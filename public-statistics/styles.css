@@ -215,3 +215,15 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 .research-kpi small {font-size:14px;color:var(--muted)}
 #researchScore li,#researchResponse li {line-height:1.7;margin-bottom:10px}
 #researchScore summary {cursor:pointer}
+
+.stat-bars {display:grid;gap:9px;margin:20px 0 28px;}
+.stat-bar {display:grid;grid-template-columns:minmax(80px,130px) minmax(40px,1fr) minmax(65px,100px);gap:10px;align-items:center;font-size:13px;}
+.stat-bar>div {height:12px;background:rgba(85,214,232,.08);}
+.stat-bar i {display:block;height:100%;background:var(--cyan);}
+.stat-bar b {text-align:right;font-variant-numeric:tabular-nums;}
+#workbench input,#workbench select,#compareField {max-width:100%;padding:9px;color:var(--ink);background:var(--navy-900);border:1px solid var(--line-strong);}
+#localError {color:var(--amber);}
+#workbench .actions {flex-wrap:wrap;margin-top:20px;}
+#workbench label {min-width:0;}
+#localPreview td {max-width:350px;overflow-wrap:anywhere;}
+@media(max-width:600px){.nav-links{gap:10px;flex-wrap:wrap;}.stat-bar{grid-template-columns:90px minmax(25px,1fr) 75px;font-size:12px;}}
