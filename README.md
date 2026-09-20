@@ -6,13 +6,13 @@
 
 ## 공개 데모 · 분석 도구
 
-**[보건·인구 파일 메타데이터 데모 열기 — Vercel](https://triguard-public-data.vercel.app/)**
+**[Triguard 기존 사이트 열기 — Vercel](https://triguard-ai.vercel.app/)**
 
-새 독립 데모는 공개자료 5개의 파일명·기관 표시·크기·SHA-256을 탐색합니다. 검색과 기관 필터를 제공하며, 원본 행 데이터와 위험점수·대응 추천은 포함하지 않습니다. [독립 빌드·검증 안내](docs/PUBLIC_DATA_DEMO.md)
+기존 Triguard 사이트의 주소입니다. 저장소의 `app.py`, `modules/`, `web/` 및 원본 데이터는 유지되어 있습니다.
 
-2026-09-20 별도 Vercel 프로젝트에 업로드 배포했고, 실제 사이트의 로딩·검색·기관 필터·빈 결과·초기화를 확인했습니다. 이후 GitHub 연결을 완료했으며, 배포 루트는 `public-data-demo`입니다. 해당 폴더의 변경을 `main`에 병합하면 자동 배포 대상이 됩니다. 소스(`public-demo-src`)를 수정했다면 배포 폴더도 재생성해서 커밋해야 합니다.
+별도로 만든 `triguard-public-data`는 보건·인구 파일 정보만 보여주는 실험용 카탈로그이며, **Triguard의 대체 사이트나 개선판이 아닙니다.** 대표 사이트로 안내했던 내용을 정정합니다. [별도 카탈로그 설명](docs/PUBLIC_DATA_DEMO.md)
 
-기존 Triguard 사이트와 Streamlit 분석 도구는 별도로 보존되어 있습니다. 기존 배포에 최신 보안 수정이 반영됐는지는 확인되지 않았습니다. [기존 배포 상태](docs/VERCEL_DEPLOYMENT.md)
+기존 사이트에 저장소의 최신 보안 수정이 배포됐는지는 확인되지 않았습니다. [기존 배포 상태](docs/VERCEL_DEPLOYMENT.md)
 
 ## 30초 요약
 
