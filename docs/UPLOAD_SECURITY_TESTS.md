@@ -11,6 +11,11 @@ rejects empty input and common binary/archive signatures, and does not interpret
 uploaded filenames as local paths. The existing upload parser consumes the checked
 bytes in memory. UTF-16/32 uploads are not supported by this guard.
 
+An optional UTF-8 BOM followed only by ASCII whitespace is also rejected as
+empty. Valid BOM-prefixed input is returned byte-for-byte unchanged, and the BOM
+still counts toward the raw byte limit. Regression tests cover these cases and
+verify that rejected empty input leaves the stream at position zero.
+
 Limitations: this is not a complete CSV validator, malware scanner or parser-memory
 limit. Streamlit may already have buffered an upload before the guard runs. No
 dependency vulnerability scan or deployed browser test is claimed. CI executes
