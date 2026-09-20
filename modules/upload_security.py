@@ -20,7 +20,10 @@ def read_csv_upload(uploaded_file, max_bytes=MAX_UPLOAD_BYTES):
         raise ValueError("Upload must provide bytes")
     if len(raw) > max_bytes:
         raise ValueError("CSV 업로드 허용 크기를 초과했습니다.")
-    if not raw or not raw.strip() or raw == b"\xef\xbb\xbf":
+    # Treat an optional UTF-8 BOM as an encoding marker, not CSV content.
+    # Preserve the original bytes for the downstream encoding-aware parser.
+    content = raw.removeprefix(b"\xef\xbb\xbf")
+    if not content.strip():
         raise ValueError("빈 CSV 파일은 업로드할 수 없습니다.")
     if b"\x00" in raw or raw.startswith((b"PK\x03\x04", b"PK\x05\x06", b"\x1f\x8b", b"%PDF-")):
         raise ValueError("압축·바이너리 파일 대신 UTF-8 또는 CP949 CSV를 사용하세요.")

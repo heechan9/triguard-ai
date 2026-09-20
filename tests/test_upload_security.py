@@ -26,6 +26,19 @@ class UploadSecurityTests(unittest.TestCase):
             with self.subTest(raw=raw), self.assertRaises(ValueError):
                 read_csv_upload(io.BytesIO(raw))
 
+    def test_bom_followed_by_whitespace_is_empty(self):
+        for suffix in (b" ", b"\r\n", b"\t \r\n"):
+            stream = io.BytesIO(b"\xef\xbb\xbf" + suffix)
+            with self.subTest(suffix=suffix), self.assertRaises(ValueError):
+                read_csv_upload(stream)
+            self.assertEqual(stream.tell(), 0)
+
+    def test_bom_content_preserves_bytes_and_size_limit(self):
+        raw = b"\xef\xbb\xbfa,b\r\n"
+        self.assertEqual(read_csv_upload(io.BytesIO(raw), len(raw)), raw)
+        with self.assertRaises(ValueError):
+            read_csv_upload(io.BytesIO(raw), len(raw) - 1)
+
     def test_cursor_reset_on_success_and_rejection(self):
         for raw in (b"a,b\n", b"a\x00b"):
             stream = io.BytesIO(raw)
