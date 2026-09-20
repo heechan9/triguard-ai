@@ -1,5 +1,17 @@
 # Vercel 정적 데모 운영
 
+## 대표 접속 경로
+
+- 공개 데모·포트폴리오 대표 주소: https://triguard-ai.vercel.app/
+- Streamlit: CSV 업로드와 Python 재분석을 위한 보조 도구. 필요할 때 `streamlit run app.py`로 로컬 실행합니다.
+- 기존 Streamlit 앱은 삭제하지 않습니다. 휴면 앱을 공개 대표 링크로 안내하지 않습니다.
+
+## 확인된 배포 상태 (2026-09-20)
+
+Vercel 프로젝트 `triguard-ai`의 production 배포는 `dpl_D7rgtq1yHpBrLsoTh6DbywaqrUWq`이며, 대표 alias는 `triguard-ai.vercel.app`입니다. 대표 URL에서 HTML 화면이 열리는 것을 확인했습니다. 전체 기능·데이터 로딩 검증 완료를 뜻하지 않습니다.
+
+현재 대표 화면은 저장소의 최신 UI와 다릅니다. 프로젝트의 배포 목록에는 최근 GitHub 보안 PR에 대응하는 신규 배포가 확인되지 않았습니다. 따라서 PR #17·#18의 main 병합과 Vercel 운영 반영은 구분합니다. 이번 문서 변경은 기존 주소 안내이며 신규 배포·승격·Git 연동 설정 변경을 수행하지 않습니다.
+
 TriGuard의 기존 Streamlit 앱은 파일 업로드와 상세 분석용으로 유지한다. Vercel 버전은 같은 계산 모듈로 미리 생성한 공개데이터 결과를 빠르게 열람하는 정적 데모다.
 
 ## 결과 갱신

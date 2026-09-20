@@ -4,6 +4,16 @@
 
 ---
 
+## 공개 데모 · 분석 도구
+
+**[공개 데모 열기 — Vercel](https://triguard-ai.vercel.app/)**
+
+포트폴리오 공유와 일반 열람에는 위 Vercel 주소를 사용합니다. 공개데이터의 저장된 결과를 보여주는 정적 웹이며, 방문자가 Python 서버를 깨울 필요가 없습니다.
+
+Streamlit은 CSV 업로드와 Python 재분석이 필요한 경우에 사용하는 보조 도구로 유지합니다. 아래 실행 방법으로 로컬에서 사용할 수 있습니다. 공개 대표 링크로는 사용하지 않습니다.
+
+> 2026-09-20 확인: Vercel 대표 주소는 열리지만 현재 공개 화면은 저장소 최신 UI와 다릅니다. GitHub 병합만으로 최신 배포 반영을 보장하지 않습니다. [배포 상태와 운영 안내](docs/VERCEL_DEPLOYMENT.md)
+
 ## 30초 요약
 
 | 질문 | 답변 |
@@ -103,7 +113,7 @@ flowchart TD
 
 ---
 
-## ⚙️ 실행 방법
+## ⚙️ 보조 분석 도구 실행 방법 — Streamlit
 
 ```bash
 git clone https://github.com/heechan9/triguard-ai.git
