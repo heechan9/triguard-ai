@@ -10,6 +10,7 @@ const offices = {
   강원도:['강원','강원영동'], 충청북도:['충북'], 전라북도:['전북'], 경상남도:['경남'], 제주특별자치도:['제주'],
 };
 let data;
+let validationReport = null;
 async function loadValidationReport() {
   const panel = $('#validationSummary');
   try {
@@ -20,8 +21,12 @@ async function loadValidationReport() {
         report.row_count !== data.rows.length || !Number.isFinite(Date.parse(report.checked_at))) {
       throw new Error('Validation report does not match the displayed source');
     }
+    validationReport = report;
+    renderIntegrated();
     panel.textContent = `배포 전 원자료 대조 완료: ${report.row_count}행 · ${report.numeric_value_count}개 수치 · 연도별 합계 ${report.national_total_checks}건 · 다운로드 ${report.download_files_checked}개. 검사 시각: ${new Date(report.checked_at).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})} (한국시간). 보관 원자료와의 일치 여부를 검사하며, 공식 통계의 정확성·최신성을 보증하지 않습니다.`;
   } catch (_) {
+    validationReport = null;
+    renderIntegrated();
     panel.textContent = '원자료 대조 결과를 확인할 수 없습니다. 검증 완료로 해석하지 말고 원본 CSV와 대조해 주세요.';
   }
 }
@@ -45,6 +50,7 @@ function selectRegion(name) {
   $('#mapDetail').innerHTML = `<p class="eyebrow">SELECTED JURISDICTION</p><h3>${relatedProvinces.map(esc).join(' · ')}</h3><p>선택 지역: ${esc(name)}</p>${relatedProvinces.length > 1 ? '<p>같은 지방청 관할 지역을 함께 표시합니다. 아래 수치는 관할 전체 통계이며 지역별로 중복 합산하지 않습니다.</p>' : ''}<p>${esc($('#year').value)}년 · 지방청 관할 전체 통계 · 단위: 명</p>` +
     (rows.length ? rows.map((r) => `<section class="office-detail"><h4>${esc(r.office)} 지방청</h4><dl>${fields.map((f) => `<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}</dd></div>`).join('')}</dl></section>`).join('') : '<p>이 연도의 해당 지방청 자료가 없습니다.</p>');
   renderDataGuide(name, selectedOffices, relatedProvinces, rows);
+  renderIntegrated();
 }
 
 function renderDataGuide(name, selectedOffices, relatedProvinces, rows) {
@@ -168,8 +174,9 @@ async function loadAgencies() {
     agencyData = snapshot.datasets;
     $('#agencyDataset').innerHTML = agencyData.map((d, i) => `<option value="${i}">${esc(d.source.replace(/\.csv$/, ''))}</option>`).join('');
     $('#agencyDataset').disabled = $('#agencySearch').disabled = false;
-    agencyPage = 0; renderAgency();
+    agencyPage = 0; renderAgency(); renderIntegrated();
   } catch (error) {
+    agencyData = []; renderIntegrated();
     $('#agencyTitle').textContent = '기관 자료를 불러오지 못했습니다.';
     $('#agencyNote').textContent = '다시 불러오기를 눌러 주세요.';
     $('#agencyRetry').hidden = false;
@@ -182,3 +189,39 @@ $('#agencyPrev').addEventListener('click', () => { agencyPage--; renderAgency();
 $('#agencyNext').addEventListener('click', () => { agencyPage++; renderAgency(); });
 $('#agencyRetry').addEventListener('click', loadAgencies);
 loadAgencies();
+
+function renderIntegrated() {
+  if (!data) return;
+  const review = buildDataReview(data, agencyData, validationReport, $('#year').value, selected, offices);
+  $('#integratedSummary').innerHTML = `<div class="panel-title"><div><p class="eyebrow">INTEGRATED DATA REVIEW</p><h3>${esc(review.related.join(' · '))} 통합 자료 점검</h3></div><strong>${review.passed} / ${review.checks.length}개 확인</strong></div><p>자료 연결·누락·출처·시점의 확인 항목 수입니다. 공통 기준일과 단위는 확인되지 않았습니다.</p><div class="review-checks">${review.checks.map(c=>`<p><b>${c.ok ? '확인' : '확인 필요'}</b> · ${esc(c.label)}</p>`).join('')}</div>`;
+  const sourceLink = d => d ? `<a href="https://github.com/heechan9/triguard-ai/blob/main/data/${encodeURIComponent(d.source)}">원본 CSV 확인</a>` : '';
+  $('#agencyCards').innerHTML = `<article class="data-guide"><h3>병무청 · ${esc($('#year').value)}년</h3><p>${review.present} / ${review.expected}개 값 있음 · 단위 명</p>${review.rows.map(r=>`<p><b>${esc(r.office)}</b> · 처분인원 ${count(r.values['처분인원'])}명</p>`).join('') || '<p>선택 연도 자료 없음</p>'}${sourceLink(data)}</article><article class="data-guide"><h3>질병관리청 · 선택 권역</h3><p>${review.health.length}개 시·도 요약행 연결 · 기간·단위 미확인</p>${review.health.map(r=>`<p><b>${esc(r[0])}</b> · 원자료 3열 ${esc(r[2] || '자료 없음')} · 4열 ${esc(r[3] || '자료 없음')}</p>`).join('') || '<p>연결된 지역 자료 없음</p>'}<p>전체 열은 분석 결과 탭에서 확인합니다.</p>${sourceLink(review.regional)}</article><article class="data-guide"><h3>방위사업청 · 전국 자료</h3>${review.procurement.map(d=>`<p>${esc(d.source.includes('입찰') ? '입찰 참여 기록' : d.source.includes('국외') ? '국외 계약 기록' : '국내 계약 기록')} <b>${count(d.source_rows)}행</b></p>`).join('') || '<p>자료 연결 확인 필요</p>'}<p>전국 원본 기록 수이며 선택 지역의 계약 수가 아닙니다. 상세 정보에서 집계를 확인하세요.</p></article>`;
+  $('#regionalHealth').innerHTML = review.regional && review.health.length ? `<table><caption>${esc(review.related.join(' · '))} · 원자료 열별 값</caption><thead><tr>${review.regional.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${review.health.map(r=>'<tr>'+r.map(v=>`<td>${esc(v === '' ? '자료 없음' : v)}</td>`).join('')+'</tr>').join('')}</tbody></table>` : '<p>지역 원자료가 연결되지 않았습니다. 상세 정보에서 기관 자료 다시 불러오기를 확인하세요.</p>';
+  const advice = [];
+  if (!review.checks[0].ok) advice.push('병무청 선택 연도와 지방청의 누락 행·항목을 원본 CSV와 대조하세요.');
+  if (!review.checks[1].ok) advice.push('질병청 시·도 이름 매핑과 방위사업청 3개 파일의 연결을 확인하세요.');
+  if (!review.checks[2].ok) advice.push('배포 보고서와 표시 자료의 출처 식별정보를 확인하세요. 자료 로딩 실패 시 상세 정보에서 다시 불러오세요.');
+  advice.push('질병청 원본의 열 제목·단위·기간을 확보한 뒤 해당 열에 연결하세요. 빈 셀은 0으로 바꾸지 마세요.');
+  advice.push('기관별 공식 기준일을 확인하세요. 파일명 날짜와 병무청 선택 연도를 다른 기관 자료의 기준일로 적용하지 마세요.');
+  advice.push('방위사업청 자료를 지역별로 표시하려면 검증된 지역 연결 키가 필요합니다. 현재는 전국 집계로 유지합니다.');
+  $('#integratedAdvice').innerHTML = advice.map(a=>`<li>${esc(a)}</li>`).join('');
+}
+const dashboardTabs = [...document.querySelectorAll('[role="tab"]')];
+function activateTab(tab) {
+  dashboardTabs.forEach(t => {
+    const active = t === tab;
+    t.setAttribute('aria-selected', String(active)); t.tabIndex = active ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !active;
+  });
+}
+dashboardTabs.forEach((tab,i) => {
+  tab.addEventListener('click', () => activateTab(tab));
+  tab.addEventListener('keydown', event => {
+    let next;
+    if (event.key === 'ArrowRight') next = (i+1)%dashboardTabs.length;
+    if (event.key === 'ArrowLeft') next = (i+dashboardTabs.length-1)%dashboardTabs.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = dashboardTabs.length-1;
+    if (next !== undefined) { event.preventDefault(); activateTab(dashboardTabs[next]); dashboardTabs[next].focus(); }
+  });
+});
