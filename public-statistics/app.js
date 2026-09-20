@@ -196,9 +196,22 @@ function renderIntegrated() {
   const review = buildDataReview(data, agencyData, validationReport, $('#year').value, selected, offices);
   $('#integratedSummary').innerHTML = `<div class="panel-title"><div><p class="eyebrow">INTEGRATED DATA REVIEW</p><h3>${esc(review.related.join(' · '))} 통합 자료 점검</h3></div><strong>${review.passed} / ${review.checks.length}개 확인</strong></div><p>자료 연결·누락·출처·시점의 확인 항목 수입니다. 공통 기준일과 단위는 확인되지 않았습니다.</p><div class="review-checks">${review.checks.map(c=>`<p><b>${c.ok ? '확인' : '확인 필요'}</b> · ${esc(c.label)}</p>`).join('')}</div>`;
   const sourceLink = d => d ? `<a href="https://github.com/heechan9/triguard-ai/blob/main/data/${encodeURIComponent(d.source)}">원본 CSV 확인</a>` : '';
-  $('#agencyCards').innerHTML = `<article class="data-guide"><h3>병무청 · ${esc($('#year').value)}년</h3><p>${review.present} / ${review.expected}개 값 있음 · 단위 명</p>${review.rows.map(r=>`<p><b>${esc(r.office)}</b> · 처분인원 ${count(r.values['처분인원'])}명</p>`).join('') || '<p>선택 연도 자료 없음</p>'}${sourceLink(data)}</article><article class="data-guide"><h3>질병관리청 · 선택 권역</h3><p>${review.health.length}개 시·도 요약행 연결 · 기간·단위 미확인</p>${review.health.map(r=>`<p><b>${esc(r[0])}</b> · 원자료 3열 ${esc(r[2] || '자료 없음')} · 4열 ${esc(r[3] || '자료 없음')}</p>`).join('') || '<p>연결된 지역 자료 없음</p>'}<p>전체 열은 분석 결과 탭에서 확인합니다.</p>${sourceLink(review.regional)}</article><article class="data-guide"><h3>방위사업청 · 업체 소재지</h3>${review.supplierRows.map(r=>`<p><b>${esc(r.region)}</b> · 국내 계약 ${count(r.count)}행</p>`).join('')}<p>대표업체 소재지 기준 · 원본 전체 기간 · 납품 지역 아님</p><details><summary>전국 집계와 분류 범위</summary>${review.procurement.map(d=>`<p>${esc(d.source.includes('입찰') ? '입찰 참여 기록' : d.source.includes('국외') ? '국외 계약 기록' : '국내 계약 기록')} <b>${count(d.source_rows)}행</b></p>`).join('') || '<p>자료 연결 확인 필요</p>'}<p>국외 계약·입찰 참여 기록은 전국 집계입니다. 국내 계약 주소 미분류 ${count(review.supplier?.unclassified)}행.</p></details></article>`;
-  $('#regionalHealth').innerHTML = review.regional && review.health.length ? `<table><caption>${esc(review.related.join(' · '))} · 원자료 열별 값</caption><thead><tr>${review.regional.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${review.health.map(r=>'<tr>'+r.map(v=>`<td>${esc(v === '' ? '자료 없음' : v)}</td>`).join('')+'</tr>').join('')}</tbody></table>` : '<p>지역 원자료가 연결되지 않았습니다. 상세 정보에서 기관 자료 다시 불러오기를 확인하세요.</p>';
-  const advice = [];
+  const regionLabel = review.related.join(' · ');
+  $('#regionContext').textContent = `현재 선택: ${regionLabel} · 병무청 ${$('#year').value}년 | 모든 탭이 이 권역에 연결됩니다.`;
+  $('#analysisTitle').textContent = `${regionLabel} · 분석 결과`;
+  $('#detailsTitle').textContent = `${regionLabel} · 상세 정보`;
+  $('#guideTitle').textContent = `${regionLabel} · 데이터 보완 안내`;
+  const healthSummary = review.health.map(r => `<p><b>${esc(r[0])}</b> · 원자료 3열 ${esc(r[2] || '자료 없음')} · 4열 ${esc(r[3] || '자료 없음')}</p>`).join('') || '<p>선택 지역에 연결된 자료가 없습니다.</p>';
+  const supplierSummary = review.supplierRows.map(r=>`<p><b>${esc(r.region)}</b> · 국내 계약 기록 ${count(r.count)}행</p>`).join('');
+  const healthCard = `<section class="office-detail"><h4>질병관리청 · ${esc(regionLabel)}</h4>${healthSummary}<p>지역별 원본 값 · 질병 열 이름·단위·기간 미확인</p><button type="button" data-open-tab="details">선택 지역의 전체 수치 보기</button>${sourceLink(review.regional)}</section>`;
+  const supplierCard = `<section class="office-detail"><h4>방위사업청 · ${esc(regionLabel)}</h4>${supplierSummary}<p>대표업체 소재지 기준 · 국내조달 원본 전체 기간 · 납품 지역 아님</p>${sourceLink(review.procurement.find(d=>d.supplier_regions))}<details><summary>전국 공통 자료</summary>${review.procurement.filter(d=>!d.supplier_regions).map(d=>`<p>${esc(d.source.includes('입찰')?'입찰 참여':'국외 계약')} 기록 ${count(d.source_rows)}행</p>`).join('')}<p>지역 연결 키가 없어 전국 자료로 표시합니다.</p></details></section>`;
+  $('#agencyCards').innerHTML = healthCard + supplierCard;
+  const healthTable = review.regional && review.health.length ? `<table class="regional-values"><caption>${esc(regionLabel)} · 질병청 원본 값</caption><thead><tr><th scope="col">원본 항목</th>${review.health.map(r=>`<th scope="col">${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${review.regional.columns.slice(2).map((c,i)=>`<tr><th scope="row">${esc(c)}</th>${review.health.map(r=>`<td>${esc(r[i+2] === '' ? '자료 없음' : r[i+2])}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p>선택 지역의 질병청 자료가 없습니다. 전체 원자료 영역에서 연결을 확인하세요.</p>';
+  $('#regionalHealth').innerHTML = healthTable;
+  $('#regionalAnalysis').innerHTML = `<div class="regional-analysis"><section><h4>병무청 · ${esc($('#year').value)}년</h4><p>${review.rows.map(r=>esc(r.office)).join(' · ')}: ${review.present}/${review.expected}개 항목 확인</p></section><section><h4>질병관리청</h4><p>${review.health.map(r=>esc(r[0])).join(' · ') || '미연결'}: ${review.health.length}/${review.related.length}개 시·도 요약행 연결</p></section><section><h4>방위사업청</h4>${supplierSummary}</section></div>`;
+  const mmaDetails = review.rows.map(r=>`<section class="office-detail"><h4>병무청 · ${esc(r.office)} · ${esc($('#year').value)}년</h4><dl class="regional-mma">${fields.map(f=>`<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}명</dd></div>`).join('')}</dl></section>`).join('') || '<p>선택 연도·지역의 병무청 자료가 없습니다.</p>';
+  $('#regionalDetails').innerHTML = mmaDetails + `<section class="office-detail"><h4>질병관리청 · ${esc(regionLabel)}</h4><p>단위·기간 미확인. 빈 칸은 0이 아닙니다.</p>${healthTable}</section>` + supplierCard;
+  const advice = [`${regionLabel}: 병무청 ${$('#year').value}년 ${review.rows.map(r=>r.office).join(' · ') || '미연결'} 관할 자료 ${review.present}/${review.expected}개 값 확인.`, `${regionLabel}: 질병청 ${review.health.map(r=>r[0]).join(' · ') || '미연결'} 요약행 ${review.health.length}개를 대조하세요.`, ...review.supplierRows.map(r=>`${r.region}: 대표업체 소재지 기준 국내 계약 기록 ${count(r.count)}행. 선택 연도별 계약 수나 납품 지역으로 해석하지 마세요.`)];
   if (!review.checks[0].ok) advice.push('병무청 선택 연도와 지방청의 누락 행·항목을 원본 CSV와 대조하세요.');
   if (!review.checks[1].ok) advice.push('질병청 시·도 이름 매핑과 방위사업청 3개 파일의 연결을 확인하세요.');
   if (!review.checks[2].ok) advice.push('배포 보고서와 표시 자료의 출처 식별정보를 확인하세요. 자료 로딩 실패 시 상세 정보에서 다시 불러오세요.');
@@ -226,4 +239,11 @@ dashboardTabs.forEach((tab,i) => {
     if (event.key === 'End') next = dashboardTabs.length-1;
     if (next !== undefined) { event.preventDefault(); activateTab(dashboardTabs[next]); dashboardTabs[next].focus(); }
   });
+});
+
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-open-tab]');
+  if (!button) return;
+  const tab = document.getElementById('tab-' + button.dataset.openTab);
+  if (tab) { activateTab(tab); tab.focus(); }
 });
