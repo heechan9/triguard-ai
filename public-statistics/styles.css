@@ -179,3 +179,14 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 #agencies td {white-space:nowrap}
 #agencies .table-wrap {max-height:600px;overflow:auto}
 #agencies .missing {color:#9cabbc}
+[hidden] {display:none !important}
+.integrated-cards {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.integrated-cards .data-guide {margin:0 0 20px;min-width:0;padding:18px}
+.integrated-cards h3 {font-size:18px}
+.review-checks {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dashboard-tabs {display:flex;gap:8px;overflow-x:auto;border-bottom:1px solid var(--line);padding-bottom:12px;margin:16px 0 24px}
+.dashboard-tabs button {white-space:nowrap}
+.dashboard-tabs [aria-selected="true"] {color:var(--cyan);border-color:var(--cyan)}
+#regionalHealth td,#regionalHealth th {white-space:nowrap}
+#integratedAdvice li {margin-bottom:14px;line-height:1.7}
+@media(max-width:780px){.integrated-cards,.review-checks{grid-template-columns:1fr}.integrated-cards .data-guide{margin-bottom:0}.dashboard-tabs{margin-top:24px}}
