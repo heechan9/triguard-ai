@@ -160,7 +160,7 @@ function renderAgency() {
   $('#agencySummary').textContent = `원본 ${d.source_rows.toLocaleString('ko-KR')}행 · 조회 표 ${d.rows.length.toLocaleString('ko-KR')}행 · 검색 결과 ${rows.length.toLocaleString('ko-KR')}행`;
   $('#agencySource').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/' + encodeURIComponent(d.source);
   $('#agencySource').hidden = false;
-  $('#agencyMetadata').innerHTML = d.metadata ? `<p>${esc(d.metadata.status)}</p>${d.metadata.evidence_url ? `<p><a href="${esc(d.metadata.evidence_url)}">공식 수치 대조 기록 확인</a></p>` : ''}<a href="${esc(d.metadata.reference_url)}">질병청 공식 통계 화면 · 보관 CSV와 선택 조건은 별도 확인</a>` : d.supplier_regions ? `<p>${esc(d.supplier_regions.note)} 미분류 ${count(d.supplier_regions.unclassified)}행 / 전체 ${count(d.supplier_regions.total)}행</p>` : '<p>원본에 지역 주소 열이 없어 지역별로 배분하지 않습니다.</p>';
+  $('#agencyMetadata').innerHTML = d.metadata ? `<p>${esc(d.metadata.status)}</p>${d.metadata.evidence_url ? `<p><a href="${esc(d.metadata.evidence_url)}">공식 수치 대조 기록 확인</a></p>` : ''}<a href="${esc(d.metadata.reference_url)}">질병청 공식 통계 화면 · 보관 CSV와 선택 조건은 별도 확인</a>` : d.supplier_regions ? `<p>${esc(d.supplier_regions.note)} 미분류 ${count(d.supplier_regions.unclassified)}행 / 전체 ${count(d.supplier_regions.total)}행</p>` : d.extra_kind ? `<p>${esc(d.period_note)}</p>` : '<p>원본에 지역 주소 열이 없어 지역별로 배분하지 않습니다.</p>';
   $('#agencyHead').innerHTML = '<tr>' + d.columns.map(c => `<th scope="col">${esc(c)}</th>`).join('') + '</tr>';
   $('#agencyBody').innerHTML = rows.slice(agencyPage * agencyPageSize, (agencyPage + 1) * agencyPageSize).map(r => '<tr>' + r.map(v => `<td>${v === '' ? '<span class="missing">자료 없음</span>' : esc(v)}</td>`).join('') + '</tr>').join('') || `<tr><td colspan="${d.columns.length}">검색 결과가 없습니다.</td></tr>`;
   $('#agencyPage').textContent = `${agencyPage + 1} / ${pages} 페이지 · 페이지당 ${agencyPageSize}행`;
@@ -207,12 +207,16 @@ function renderIntegrated() {
   const supplierSummary = review.supplierRows.map(r=>`<p><b>${esc(r.region)}</b> · 국내 계약 기록 ${count(r.count)}행</p>`).join('');
   const healthCard = `<section class="office-detail"><h4>질병관리청 · ${esc(regionLabel)}</h4>${healthSummary}<p>지역별 원본 값 · 질병 열 이름·단위·기간 미확인</p><button type="button" data-open-tab="details">선택 지역의 전체 수치 보기</button>${sourceLink(review.regional)}</section>`;
   const supplierCard = `<section class="office-detail"><h4>방위사업청 · ${esc(regionLabel)}</h4>${supplierSummary}<p>대표업체 소재지 기준 · 국내조달 원본 전체 기간 · 납품 지역 아님</p>${sourceLink(review.procurement.find(d=>d.supplier_regions))}<details><summary>전국 공통 자료</summary>${review.procurement.filter(d=>!d.supplier_regions).map(d=>`<p>${esc(d.source.includes('입찰')?'입찰 참여':'국외 계약')} 기록 ${count(d.source_rows)}행</p>`).join('')}<p>지역 연결 키가 없어 전국 자료로 표시합니다.</p></details></section>`;
-  $('#agencyCards').innerHTML = healthCard + supplierCard;
+  const extraCards = review.extra.map(d=>`<section class="office-detail"><h4>${esc(d.source.replace(/_202\d+|\.csv/g,''))}</h4><p>${esc(d.period_note)}</p>${d.extra_kind==='catalog' ? `<p>전국 공통 목록 ${count(d.source_rows)}행</p><button type="button" data-source="${esc(d.source)}">품목 목록 조회</button>` : d.selectedRows.map(r=>`<p><b>${esc(r[0])}</b> · ${esc(d.columns[1])}: ${esc(r[1])}</p>`).join('') || '<p>선택 지역 자료 없음</p>'}${sourceLink(d)}</section>`).join('');
+  const extraDetails = review.extra.filter(d=>d.extra_kind!=='catalog').map(d=>`<section class="office-detail"><h4>${esc(d.source.replace(/_202\d+|\.csv/g,''))}</h4><p>${esc(d.note)}</p><div class="table-wrap"><table class="regional-values"><thead><tr><th>원본 항목</th>${d.selectedRows.map(r=>`<th>${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${d.columns.slice(1).map((c,i)=>`<tr><th>${esc(c)}</th>${d.selectedRows.map(r=>`<td>${esc(r[i+1] || '자료 없음')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${sourceLink(d)}</section>`).join('');
+  $('#agencyCards').innerHTML = healthCard + supplierCard + extraCards;
   const healthTable = review.regional && review.health.length ? `<table class="regional-values"><caption>${esc(regionLabel)} · 질병청 원본 값</caption><thead><tr><th scope="col">원본 항목</th>${review.health.map(r=>`<th scope="col">${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${review.regional.columns.slice(2).map((c,i)=>`<tr><th scope="row">${esc(c)}</th>${review.health.map(r=>`<td>${esc(r[i+2] === '' ? '자료 없음' : r[i+2])}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p>선택 지역의 질병청 자료가 없습니다. 전체 원자료 영역에서 연결을 확인하세요.</p>';
   $('#regionalHealth').innerHTML = healthTable;
   $('#regionalAnalysis').innerHTML = `<div class="regional-analysis"><section><h4>병무청 · ${esc($('#year').value)}년</h4><p>${review.rows.map(r=>esc(r.office)).join(' · ')}: ${review.present}/${review.expected}개 항목 확인</p></section><section><h4>질병관리청</h4><p>${review.health.map(r=>esc(r[0])).join(' · ') || '미연결'}: ${review.health.length}/${review.related.length}개 시·도 요약행 연결</p></section><section><h4>방위사업청</h4>${supplierSummary}</section></div>`;
   const mmaDetails = review.rows.map(r=>`<section class="office-detail"><h4>병무청 · ${esc(r.office)} · ${esc($('#year').value)}년</h4><dl class="regional-mma">${fields.map(f=>`<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}명</dd></div>`).join('')}</dl></section>`).join('') || '<p>선택 연도·지역의 병무청 자료가 없습니다.</p>';
   $('#regionalDetails').innerHTML = mmaDetails + `<section class="office-detail"><h4>질병관리청 · ${esc(regionLabel)}</h4><p>단위·기간 미확인. 빈 칸은 0이 아닙니다.</p>${healthTable}</section>` + supplierCard;
+  $('#regionalDetails').innerHTML += extraDetails + extraCards;
+  $('#regionalAnalysis').innerHTML += extraCards;
   const advice = [`${regionLabel}: 병무청 ${$('#year').value}년 ${review.rows.map(r=>r.office).join(' · ') || '미연결'} 관할 자료 ${review.present}/${review.expected}개 값 확인.`, `${regionLabel}: 질병청 ${review.health.map(r=>r[0]).join(' · ') || '미연결'} 요약행 ${review.health.length}개를 대조하세요.`, ...review.supplierRows.map(r=>`${r.region}: 대표업체 소재지 기준 국내 계약 기록 ${count(r.count)}행. 선택 연도별 계약 수나 납품 지역으로 해석하지 마세요.`)];
   if (!review.checks[0].ok) advice.push('병무청 선택 연도와 지방청의 누락 행·항목을 원본 CSV와 대조하세요.');
   if (!review.checks[1].ok) advice.push('질병청 시·도 이름 매핑과 방위사업청 3개 파일의 연결을 확인하세요.');
@@ -221,6 +225,7 @@ function renderIntegrated() {
   advice.push('기관별 공식 기준일을 확인하세요. 파일명 날짜와 병무청 선택 연도를 다른 기관 자료의 기준일로 적용하지 마세요.');
   advice.push(review.supplier ? `국내조달은 대표업체 주소로 지역을 연결했습니다. 미분류 ${review.supplier.unclassified}행은 원본 주소를 보완해야 합니다. 업체 소재지를 납품 지역으로 해석하지 마세요.` : '국내조달 대표업체 주소의 연결을 확인하세요.');
   advice.push('국외 계약과 입찰 참여 자료에는 주소 열이 없어 전국 집계로 표시합니다.');
+  review.extra.forEach(d=>advice.push(`${d.source}: ${d.note}`));
   $('#integratedAdvice').innerHTML = advice.map(a=>`<li>${esc(a)}</li>`).join('');
 }
 const dashboardTabs = [...document.querySelectorAll('[role="tab"]')];
@@ -280,3 +285,13 @@ async function loadResearch() {
 }
 $('#scoreRetry').addEventListener('click',loadResearch);
 loadResearch();
+
+document.addEventListener('click', event=>{
+  const button = event.target.closest('[data-source]');
+  if (!button) return;
+  const index = agencyData.findIndex(d=>d.source===button.dataset.source);
+  if (index<0) return;
+  $('#agencyDataset').value=String(index); $('#agencySearch').value=''; agencyPage=0; renderAgency();
+  activateTab($('#tab-details')); document.querySelector('.all-source').open=true;
+  $('#agencyDataset').focus(); $('#agencies').scrollIntoView({block:'start'});
+});
