@@ -136,3 +136,49 @@ $('#year').addEventListener('change',renderYear);
 $('#province').addEventListener('change',(e) => selectRegion(e.target.value));
 $('#retry').addEventListener('click',load);
 load();
+
+let agencyData = [];
+let agencyPage = 0;
+const agencyPageSize = 20;
+function renderAgency() {
+  const d = agencyData[Number($('#agencyDataset').value)];
+  if (!d) return;
+  const query = $('#agencySearch').value.trim().toLocaleLowerCase('ko-KR');
+  const rows = d.rows.filter(r => r.some(v => String(v).toLocaleLowerCase('ko-KR').includes(query)));
+  const pages = Math.max(1, Math.ceil(rows.length / agencyPageSize));
+  agencyPage = Math.min(agencyPage, pages - 1);
+  $('#agencyTitle').textContent = d.source.replace(/\.csv$/, '');
+  $('#agencyNote').textContent = d.note;
+  $('#agencySummary').textContent = `원본 ${d.source_rows.toLocaleString('ko-KR')}행 · 조회 표 ${d.rows.length.toLocaleString('ko-KR')}행 · 검색 결과 ${rows.length.toLocaleString('ko-KR')}행`;
+  $('#agencySource').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/' + encodeURIComponent(d.source);
+  $('#agencySource').hidden = false;
+  $('#agencyHead').innerHTML = '<tr>' + d.columns.map(c => `<th scope="col">${esc(c)}</th>`).join('') + '</tr>';
+  $('#agencyBody').innerHTML = rows.slice(agencyPage * agencyPageSize, (agencyPage + 1) * agencyPageSize).map(r => '<tr>' + r.map(v => `<td>${v === '' ? '<span class="missing">자료 없음</span>' : esc(v)}</td>`).join('') + '</tr>').join('') || `<tr><td colspan="${d.columns.length}">검색 결과가 없습니다.</td></tr>`;
+  $('#agencyPage').textContent = `${agencyPage + 1} / ${pages} 페이지 · 페이지당 ${agencyPageSize}행`;
+  $('#agencyPrev').disabled = agencyPage === 0;
+  $('#agencyNext').disabled = agencyPage >= pages - 1;
+}
+async function loadAgencies() {
+  $('#agencyRetry').hidden = true;
+  try {
+    const response = await fetch('/data/agencies.json');
+    if (!response.ok) throw new Error('기관 자료 응답 오류');
+    const snapshot = await response.json();
+    if (!snapshot.datasets?.length) throw new Error('기관 자료 없음');
+    agencyData = snapshot.datasets;
+    $('#agencyDataset').innerHTML = agencyData.map((d, i) => `<option value="${i}">${esc(d.source.replace(/\.csv$/, ''))}</option>`).join('');
+    $('#agencyDataset').disabled = $('#agencySearch').disabled = false;
+    agencyPage = 0; renderAgency();
+  } catch (error) {
+    $('#agencyTitle').textContent = '기관 자료를 불러오지 못했습니다.';
+    $('#agencyNote').textContent = '다시 불러오기를 눌러 주세요.';
+    $('#agencyRetry').hidden = false;
+    console.error(error);
+  }
+}
+$('#agencyDataset').addEventListener('change', () => { agencyPage = 0; $('#agencySearch').value = ''; renderAgency(); });
+$('#agencySearch').addEventListener('input', () => { agencyPage = 0; renderAgency(); });
+$('#agencyPrev').addEventListener('click', () => { agencyPage--; renderAgency(); });
+$('#agencyNext').addEventListener('click', () => { agencyPage++; renderAgency(); });
+$('#agencyRetry').addEventListener('click', loadAgencies);
+loadAgencies();

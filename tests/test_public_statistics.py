@@ -58,3 +58,37 @@ class PublicStatisticsGate(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
+
+class AgencySourceExport(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from scripts.export_agency_statistics import generate
+        cls.datasets = generate()['datasets']
+
+    def test_all_sources_and_exact_kdca_cells(self):
+        import csv, io, hashlib
+        self.assertEqual(len(self.datasets), 7)
+        for d in self.datasets:
+            raw = (ROOT/'data'/d['source']).read_bytes()
+            self.assertEqual(d['sha256'], hashlib.sha256(raw).hexdigest())
+            if d['source'].startswith('질병관리청'):
+                try:
+                    text = raw.decode('utf-8-sig')
+                except UnicodeDecodeError:
+                    text = raw.decode('cp949')
+                original = list(csv.reader(io.StringIO(text)))
+                self.assertEqual(len(d['rows']), len(original))
+                for source, shown in zip(original, d['rows']):
+                    self.assertEqual(shown[:len(source)], source)
+                    self.assertTrue(all(v == '' for v in shown[len(source):]))
+
+    def test_dapa_aggregates_only(self):
+        for d in self.datasets:
+            if d['source'].startswith('방위사업청'):
+                self.assertEqual(len(d['columns']), 2)
+                if d['columns'][0] == '계약체결방법명':
+                    self.assertEqual(sum(int(r[1]) for r in d['rows']), d['source_rows'])
+                else:
+                    self.assertEqual(int(d['rows'][0][1]), d['source_rows'])
+                self.assertNotIn('대표자', d['columns'])
+                self.assertNotIn('계약기관담당자명', d['columns'])
