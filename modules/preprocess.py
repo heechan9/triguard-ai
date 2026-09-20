@@ -5,9 +5,11 @@ TriGuard AI - 전처리 모듈
 """
 
 import re
+from io import BytesIO
 import chardet
 import pandas as pd
 from difflib import get_close_matches
+from modules.upload_security import read_csv_upload
 
 # ─────────────────────────────────────────────
 # 지역명 상수
@@ -213,20 +215,18 @@ def load_csv(filepath: str, **kwargs) -> pd.DataFrame:
 
 def load_csv_from_upload(uploaded_file, **kwargs) -> pd.DataFrame:
     """Streamlit UploadedFile 객체에서 CSV 로드."""
-    raw = uploaded_file.read()
-    uploaded_file.seek(0)
+    raw = read_csv_upload(uploaded_file)
     result = chardet.detect(raw[:20000])
     enc = result.get("encoding") or "cp949"
     if enc.lower() in ("ascii",):
         enc = "cp949"
     for encoding in [enc, "cp949", "utf-8-sig", "euc-kr", "latin-1"]:
         try:
-            uploaded_file.seek(0)
-            df = pd.read_csv(uploaded_file, encoding=encoding, **kwargs)
+            df = pd.read_csv(BytesIO(raw), encoding=encoding, **kwargs)
             return df
         except Exception:
             continue
-    raise ValueError(f"CSV 파일을 읽을 수 없습니다: {uploaded_file.name}")
+    raise ValueError("CSV 파일을 읽을 수 없습니다.")
 
 
 # ─────────────────────────────────────────────
