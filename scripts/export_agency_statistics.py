@@ -5,6 +5,11 @@ import io
 from collections import Counter
 from pathlib import Path
 
+try:
+    from .agency_metadata import supplier_regions, health_metadata
+except ImportError:
+    from agency_metadata import supplier_regions, health_metadata
+
 ROOT = Path(__file__).resolve().parents[1]
 
 def read_rows(path):
@@ -27,6 +32,8 @@ def generate(root=ROOT):
         if path.name.startswith('방위사업청'):
             header, records = rows[0], rows[1:]
             source_rows = len(records)
+            if '대표업체주소' in header:
+                item['supplier_regions'] = supplier_regions(header, records)
             if '계약체결방법명' in header:
                 index = header.index('계약체결방법명')
                 counts = Counter(r[index] or '기재 없음' for r in records)
@@ -40,6 +47,7 @@ def generate(root=ROOT):
             width = max(map(len, rows))
             item.update(columns=[f'원자료 {i+1}열' for i in range(width)], rows=[r + ['']*(width-len(r)) for r in rows])
             item['note'] = '이 CSV에는 열 제목이 없습니다. 첫 행도 자료로 보존했습니다. 항목명·단위·기간 구분은 미확인이므로 원자료 열 번호와 값을 그대로 표시합니다. 빈 셀은 자료 없음이며 0과 구분합니다. 서로 다른 열을 합산하지 않습니다.'
+            item['metadata'] = health_metadata(path.name, item['columns'], item['rows'])
         item['source_rows'] = source_rows
         datasets.append(item)
     if len(datasets) != 7:
