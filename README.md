@@ -10,8 +10,6 @@
 
 기존 Triguard 사이트의 주소입니다. 저장소의 `app.py`, `modules/`, `web/` 및 원본 데이터는 유지되어 있습니다.
 
-별도로 만든 `triguard-public-data`는 보건·인구 파일 정보만 보여주는 실험용 카탈로그이며, **Triguard의 대체 사이트나 개선판이 아닙니다.** 대표 사이트로 안내했던 내용을 정정합니다. [별도 카탈로그 설명](docs/PUBLIC_DATA_DEMO.md)
-
 기존 사이트에 저장소의 최신 보안 수정이 배포됐는지는 확인되지 않았습니다. [기존 배포 상태](docs/VERCEL_DEPLOYMENT.md)
 
 ## 30초 요약
