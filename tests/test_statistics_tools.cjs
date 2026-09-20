@@ -19,3 +19,11 @@ test('Synthetic data reproducible and independent of actual regions',()=>{
  assert.deepEqual(t.simulate(42,1000,20),t.simulate(42,1000,20));assert.notDeepEqual(t.simulate(42,1000,20),t.simulate(43,1000,20));
  assert.ok(t.simulate(2,1000,0).rows.every(r=>r[1]==='1000'));assert.throws(()=>t.simulate(42,-1,0));
 });
+
+test('CSV download fallback retains exact data without Blob URL support',()=>{
+ const rows=[['지역','값'],['가상','1,200']];
+ const href=t.csvURL(rows,{},undefined);
+ assert.equal(decodeURIComponent(href.split(',').slice(1).join(',')),t.csv(rows));
+ let created=false;
+ assert.equal(t.csvURL(rows,{createObjectURL:b=>{created=!!b;return 'blob:test';}},Blob),'blob:test');assert.equal(created,true);
+});

@@ -41,6 +41,10 @@ const StatisticsTools = (() => {
     let state=seed>>>0;
     return {columns:['가상 월','가상 행정 처리 건수'],rows:Array.from({length:12},(_,i)=>{state=(Math.imul(1664525,state)+1013904223)>>>0;return [String(i+1),String(Math.round(baseline*(1+(state/4294967296*2-1)*variation/100)))];})};
   }
-  return {parseCSV,numeric,summary,csv,simulate};
+  function csvURL(rows,api,BlobClass) {
+    const content=csv(rows);
+    return typeof api?.createObjectURL==='function'&&typeof BlobClass==='function' ? api.createObjectURL(new BlobClass([content],{type:'text/csv;charset=utf-8'})) : 'data:text/csv;charset=utf-8,'+encodeURIComponent(content);
+  }
+  return {parseCSV,numeric,summary,csv,simulate,csvURL};
 })();
 if(typeof module!=='undefined')module.exports=StatisticsTools;
