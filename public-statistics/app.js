@@ -54,6 +54,7 @@ function selectRegion(name) {
   renderIntegrated();
   renderResearch();
   if (window.renderStatisticsWorkbench) window.renderStatisticsWorkbench();
+  if (window.syncDashboardURL) window.syncDashboardURL();
 }
 
 function renderDataGuide(name, selectedOffices, relatedProvinces, rows) {
@@ -131,7 +132,10 @@ async function load() {
     $('#sourceDate').textContent = data.date_note;
     $('#sourceName').textContent = data.source;
     $('#sourceLink').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/'+encodeURIComponent(data.source);
+    const initial = DashboardState.read(location.search,geo.features.map(f=>f.properties.name),[...new Set(data.rows.map(r=>r.year))].sort((a,b)=>b-a));
+    selected=initial.region; $('#year').value=String(initial.year);
     drawMap(geo); renderYear();
+    activateTab(document.getElementById('tab-'+initial.tab));
     loadValidationReport();
     $('#loadStatus').textContent = '17개 시·도 · 2019–2025년 자료';
   } catch (error) {
@@ -210,14 +214,14 @@ function renderIntegrated() {
   const healthCard = `<section class="office-detail"><h4>질병관리청 · ${esc(regionLabel)}</h4>${healthSummary}<p>지역별 원본 값 · 질병 열 이름·단위·기간 미확인</p><button type="button" data-open-tab="details">선택 지역의 전체 수치 보기</button>${sourceLink(review.regional)}</section>`;
   const supplierCard = `<section class="office-detail"><h4>방위사업청 · ${esc(regionLabel)}</h4>${supplierSummary}<p>대표업체 소재지 기준 · 국내조달 원본 전체 기간 · 납품 지역 아님</p>${sourceLink(review.procurement.find(d=>d.supplier_regions))}<details><summary>전국 공통 자료</summary>${review.procurement.filter(d=>!d.supplier_regions).map(d=>`<p>${esc(d.source.includes('입찰')?'입찰 참여':'국외 계약')} 기록 ${count(d.source_rows)}행</p>`).join('')}<p>지역 연결 키가 없어 전국 자료로 표시합니다.</p></details></section>`;
   const extraCards = review.extra.map(d=>`<section class="office-detail"><h4>${esc(d.source.replace(/_202\d+|\.csv/g,''))}</h4><p>${esc(d.period_note)}</p>${d.extra_kind==='catalog' ? `<p>전국 공통 목록 ${count(d.source_rows)}행</p><button type="button" data-source="${esc(d.source)}">품목 목록 조회</button>` : d.selectedRows.map(r=>`<p><b>${esc(r[0])}</b> · ${esc(d.columns[1])}: ${esc(r[1])}</p>`).join('') || '<p>선택 지역 자료 없음</p>'}${sourceLink(d)}</section>`).join('');
-  const extraDetails = review.extra.filter(d=>d.extra_kind!=='catalog').map(d=>`<section class="office-detail"><h4>${esc(d.source.replace(/_202\d+|\.csv/g,''))}</h4><p>${esc(d.note)}</p><div class="table-wrap"><table class="regional-values"><thead><tr><th>원본 항목</th>${d.selectedRows.map(r=>`<th>${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${d.columns.slice(1).map((c,i)=>`<tr><th>${esc(c)}</th>${d.selectedRows.map(r=>`<td>${esc(r[i+1] || '자료 없음')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${sourceLink(d)}</section>`).join('');
+  const extraDetails = review.extra.filter(d=>d.extra_kind!=='catalog').map(d=>`<details class="office-detail compact-source"><summary>${esc(d.source.replace(/_202\d+|\.csv/g,''))} · 상세 수치 펼치기</summary><p>${esc(d.note)}</p><div class="table-wrap"><table class="regional-values"><thead><tr><th>원본 항목</th>${d.selectedRows.map(r=>`<th>${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${d.columns.slice(1).map((c,i)=>`<tr><th>${esc(c)}</th>${d.selectedRows.map(r=>`<td>${esc(r[i+1] || '자료 없음')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${sourceLink(d)}</details>`).join('');
   $('#agencyCards').innerHTML = healthCard + supplierCard + extraCards;
   const healthTable = review.regional && review.health.length ? `<table class="regional-values"><caption>${esc(regionLabel)} · 질병청 원본 값</caption><thead><tr><th scope="col">원본 항목</th>${review.health.map(r=>`<th scope="col">${esc(r[0])}</th>`).join('')}</tr></thead><tbody>${review.regional.columns.slice(2).map((c,i)=>`<tr><th scope="row">${esc(c)}</th>${review.health.map(r=>`<td>${esc(r[i+2] === '' ? '자료 없음' : r[i+2])}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p>선택 지역의 질병청 자료가 없습니다. 전체 원자료 영역에서 연결을 확인하세요.</p>';
   $('#regionalHealth').innerHTML = healthTable;
   $('#regionalAnalysis').innerHTML = `<div class="regional-analysis"><section><h4>병무청 · ${esc($('#year').value)}년</h4><p>${review.rows.map(r=>esc(r.office)).join(' · ')}: ${review.present}/${review.expected}개 항목 확인</p></section><section><h4>질병관리청</h4><p>${review.health.map(r=>esc(r[0])).join(' · ') || '미연결'}: ${review.health.length}/${review.related.length}개 시·도 요약행 연결</p></section><section><h4>방위사업청</h4>${supplierSummary}</section></div>`;
   const mmaDetails = review.rows.map(r=>`<section class="office-detail"><h4>병무청 · ${esc(r.office)} · ${esc($('#year').value)}년</h4><dl class="regional-mma">${fields.map(f=>`<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}명</dd></div>`).join('')}</dl></section>`).join('') || '<p>선택 연도·지역의 병무청 자료가 없습니다.</p>';
   $('#regionalDetails').innerHTML = mmaDetails + `<section class="office-detail"><h4>질병관리청 · ${esc(regionLabel)}</h4><p>단위·기간 미확인. 빈 칸은 0이 아닙니다.</p>${healthTable}</section>` + supplierCard;
-  $('#regionalDetails').innerHTML += extraDetails + extraCards;
+  $('#regionalDetails').innerHTML += extraDetails;
   $('#regionalAnalysis').innerHTML += extraCards;
   const advice = [`${regionLabel}: 병무청 ${$('#year').value}년 ${review.rows.map(r=>r.office).join(' · ') || '미연결'} 관할 자료 ${review.present}/${review.expected}개 값 확인.`, `${regionLabel}: 질병청 ${review.health.map(r=>r[0]).join(' · ') || '미연결'} 요약행 ${review.health.length}개를 대조하세요.`, ...review.supplierRows.map(r=>`${r.region}: 대표업체 소재지 기준 국내 계약 기록 ${count(r.count)}행. 선택 연도별 계약 수나 납품 지역으로 해석하지 마세요.`)];
   if (!review.checks[0].ok) advice.push('병무청 선택 연도와 지방청의 누락 행·항목을 원본 CSV와 대조하세요.');
@@ -239,6 +243,7 @@ function activateTab(tab) {
     t.setAttribute('aria-selected', String(active)); t.tabIndex = active ? 0 : -1;
     document.getElementById(t.getAttribute('aria-controls')).hidden = !active;
   });
+  if (window.syncDashboardURL) window.syncDashboardURL();
 }
 dashboardTabs.forEach((tab,i) => {
   tab.addEventListener('click', () => activateTab(tab));
@@ -264,7 +269,7 @@ function renderResearch() {
   const rows = researchScores.regions.filter(r=>(offices[selected] || []).includes(r.지방청));
   const date = researchScores.generated_at.slice(0,10);
   const scoreCards = rows.map(r=>`<section class="research-kpi"><h4>${esc(r.지방청)} 지방청</h4><strong>${r.통합Risk.toFixed(2)}<small> / 100</small></strong><p>기존 분류: ${esc(r.위험등급)}</p></section>`).join('') || '<p>이 지역의 기존 연구 결과가 없습니다.</p>';
-  $('#researchScore').innerHTML = `<p class="eyebrow">TRIGUARD RESEARCH INDEX</p><h3>${esc(selected)} · 통합 리스크 스코어</h3><div class="research-grid">${scoreCards}</div><p>인력 40% + 감염병 40% + 물자 20% · 생성일 ${esc(date)} · 고정 연구 스냅샷</p><p>병무청 선택 연도(${$('#year').value}년)와 별개입니다. 실제 위험 확률이나 검증된 예측값이 아닙니다.</p><details><summary>계산 근거와 한계</summary><ul>${researchScores.limitations.map(l=>`<li>${esc(l)}</li>`).join('')}</ul><p>기존 분류 경계: 정상 35 미만 · 주의 35 이상 60 미만 · 위험 60 이상. 연구자가 설정한 기준입니다.</p><a href="https://github.com/heechan9/triguard-ai/blob/main/web/data/risk_snapshot.json">기존 결과 원본</a></details>`;
+  $('#researchScore').innerHTML = `<p class="eyebrow">TRIGUARD RESEARCH INDEX</p><h3>${esc(selected)} · 통합 리스크 스코어</h3><div class="research-grid">${scoreCards}</div><p>인력 40% + 감염병 40% + 물자 20% · 생성일 ${esc(date)} · 고정 연구 스냅샷</p><p>병무청 선택 연도(${$('#year').value}년)와 별개입니다. 실제 위험 확률이나 검증된 예측값이 아닙니다.</p><details><summary>계산 근거와 한계</summary><ul>${researchScores.limitations.map(l=>`<li>${esc(l)}</li>`).join('')}</ul><p>기존 분류 경계: 정상 35 미만 · 주의 35 이상 60 미만 · 위험 60 이상. 연구자가 설정한 기준입니다.</p><p>결과 파일 SHA-256: <code class="source-hash">${esc(researchScores.source_sha256)}</code></p><p>생성 당시 입력 파일별 해시는 기록되어 있지 않습니다. 현재 조회 자료와 생성 당시 자료의 동일성은 미확인입니다.</p><a href="https://github.com/heechan9/triguard-ai/blob/main/web/data/risk_snapshot.json">기존 결과 원본</a> · <a href="https://github.com/heechan9/triguard-ai/blob/main/docs/RESEARCH_RESTORATION.md">계산 검토 기록</a></details>`;
   $('#mapRisk').innerHTML = `<h3>통합 리스크 · 기존 연구 결과</h3>${scoreCards}<p>생성일 ${esc(date)} · 고정 스냅샷 · 실제 위험 확률 아님</p>`;
   $('#researchAnalysis').innerHTML = rows.map(r=>`<section class="office-detail"><h4>${esc(r.지방청)} · 기존 점수 구성</h4><dl class="regional-mma">${[['인력Risk','인력',.4],['감염병DC','감염병',.4],['물자Risk','물자(전국 공통)',.2]].map(([key,label,w])=>`<div><dt>${label} · ${w*100}%</dt><dd>${r[key].toFixed(2)}</dd><p>가중 기여 ${(r[key]*w).toFixed(2)}점</p></div>`).join('')}</dl></section>`).join('') + '<p>기존 계산 결과의 구성 설명입니다. 미확인 단위·기간을 포함해 지표 타당성은 추가 검증이 필요합니다.</p>';
   $('#responseTitle').textContent = `${selected} · 대응 추천 · 행정 점검`;
