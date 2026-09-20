@@ -1,4 +1,6 @@
-# Independent public-data metadata demo
+# Separate experimental metadata catalog
+
+> This catalog is not the original Triguard application, its replacement, or an upgraded version. Its earlier promotion as the main project demo was incorrect. The README restores the original site reference. This document describes only the separate catalog.
 
 Existing `app.py`, `modules/`, `web/` and the root Vercel configuration are preserved.
 The general security changes in PRs #17 and #18 remain in main; their presence in
