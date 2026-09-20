@@ -12,6 +12,14 @@
 
 기존 사이트에 저장소의 최신 보안 수정이 배포됐는지는 확인되지 않았습니다. [기존 배포 상태](docs/VERCEL_DEPLOYMENT.md)
 
+## 공개 통계 화면 품질 검증
+
+현재 Vercel 배포 대상은 `public-statistics/`입니다. 지역·연도별 공개 통계, 통합 관할 조회, 원자료 안내를 제공하며, 배포 전에 원본 일치·중복·누락·전국 합계·CSV 다운로드를 자동 검사합니다. 검사 범위는 화면 하단에 표시됩니다. 기존 Streamlit 분석 도구와 현재 공개 화면의 범위는 다릅니다.
+
+- [강의자료 적용 및 요구사항–검증 연결표](docs/LECTURE_APPLICATION.md)
+- 검증 실행: `python scripts/validate_public_statistics.py`
+- 오류 사례 테스트: `python -m unittest discover -s tests -p "test_public_statistics.py" -v`
+
 ## 30초 요약
 
 | 질문 | 답변 |
