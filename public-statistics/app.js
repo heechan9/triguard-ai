@@ -17,13 +17,16 @@ const yearRows = () => data.rows.filter((r) => r.year === Number($('#year').valu
 function selectRegion(name) {
   selected = name;
   $('#province').value = name;
+  const selectedOffices = offices[name] || [];
+  const relatedProvinces = Object.keys(offices).filter((province) =>
+    offices[province].some((office) => selectedOffices.includes(office)));
   document.querySelectorAll('.province').forEach((p) => {
-    const active = p.dataset.province === name;
+    const active = relatedProvinces.includes(p.dataset.province);
     p.classList.toggle('selected', active);
     p.setAttribute('aria-pressed', String(active));
   });
-  const rows = yearRows().filter((r) => offices[name]?.includes(r.office));
-  $('#mapDetail').innerHTML = `<p class="eyebrow">SELECTED REGION</p><h3>${esc(name)}</h3><p>${esc($('#year').value)}년 · 지방청 관할 전체 통계 · 단위: 명</p>` +
+  const rows = yearRows().filter((r) => selectedOffices.includes(r.office));
+  $('#mapDetail').innerHTML = `<p class="eyebrow">SELECTED JURISDICTION</p><h3>${relatedProvinces.map(esc).join(' · ')}</h3><p>선택 지역: ${esc(name)}</p>${relatedProvinces.length > 1 ? '<p>같은 지방청 관할 지역을 함께 표시합니다. 아래 수치는 관할 전체 통계이며 지역별로 중복 합산하지 않습니다.</p>' : ''}<p>${esc($('#year').value)}년 · 지방청 관할 전체 통계 · 단위: 명</p>` +
     (rows.length ? rows.map((r) => `<section class="office-detail"><h4>${esc(r.office)} 지방청</h4><dl>${fields.map((f) => `<div><dt>${esc(f)}</dt><dd>${count(r.values[f])}</dd></div>`).join('')}</dl></section>`).join('') : '<p>이 연도의 해당 지방청 자료가 없습니다.</p>');
 }
 
