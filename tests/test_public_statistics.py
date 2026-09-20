@@ -114,5 +114,15 @@ class AgencyMetadataReview(unittest.TestCase):
         self.assertEqual(regions['counts']['경상북도'], 1492)
         for d in datasets:
             if d['source'].startswith('질병관리청'):
-                self.assertIn('미확인', d['metadata']['status'])
-                self.assertIn('원자료', d['columns'][0])
+                if '급성호흡기' in d['source']:
+                    self.assertEqual(d['columns'][:2], ['연도', '주차'])
+                    self.assertEqual(d['metadata']['unit'], '입원환자수(명)')
+                else:
+                    self.assertIn('미확인', d['metadata']['status'])
+                    self.assertIn('원자료', d['columns'][0])
+
+class OfficialAriSchema(unittest.TestCase):
+    def test_changed_source_cannot_reuse_verified_headers(self):
+        from scripts.agency_metadata import health_metadata
+        with self.assertRaisesRegex(ValueError, 'ARI source changed'):
+            health_metadata('급성호흡기.csv', ['unknown']*11, [], 'wrong')
