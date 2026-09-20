@@ -172,3 +172,10 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 .data-guide p{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
 .data-guide .button{display:inline-block}
 @media(max-width:720px){.data-guide{padding:18px}.data-guide-grid{grid-template-columns:1fr;gap:12px}}
+
+#agencyDataset {max-width:100%;width: min(580px, 100%)}
+#agencies .filters label {min-width:0;max-width:100%}
+#agencySearch {background:#101e31;color:#eaf2fa;border:1px solid #32435a;border-radius:6px;padding:10px;font:inherit;max-width:100%}
+#agencies td {white-space:nowrap}
+#agencies .table-wrap {max-height:600px;overflow:auto}
+#agencies .missing {color:#9cabbc}
