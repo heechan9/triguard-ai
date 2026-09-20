@@ -164,3 +164,15 @@ class AdditionalSourcePreservation(unittest.TestCase):
             self.assertEqual(d['columns'], rows[0])
             self.assertEqual(d['rows'], rows[1:])
             self.assertEqual(d['source_rows'], len(rows)-1)
+
+class SourceChanges(unittest.TestCase):
+    def test_change_addition_removal_are_separate(self):
+        from scripts.source_manifest import compare
+        old={'same':{'sha256':'a'},'changed':{'sha256':'b'},'gone':{'sha256':'c'}}
+        new={'same':{'sha256':'a'},'changed':{'sha256':'d'},'new':{'sha256':'e'}}
+        self.assertEqual({r['source']:r['state'] for r in compare(old,new)}, {'same':'unchanged','changed':'changed','gone':'removed','new':'added'})
+
+    def test_current_reviewed_baseline(self):
+        from scripts.source_manifest import generate
+        report=generate()
+        self.assertEqual(report['counts'],{'unchanged':13,'changed':0,'added':0,'removed':0})

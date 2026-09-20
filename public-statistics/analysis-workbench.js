@@ -3,7 +3,7 @@
   let local=null, generation=0;
   const urls=new Map();
   const fmt=v=>v===null?'자료 없음':Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2});
-  function download(id,rows,name){const a=document.getElementById(id);if(urls.has(id))URL.revokeObjectURL(urls.get(id));const url=URL.createObjectURL(new Blob([StatisticsTools.csv(rows)],{type:'text/csv;charset=utf-8'}));urls.set(id,url);a.href=url;a.download=name;a.hidden=false;}
+  function download(id,rows,name){const a=document.getElementById(id);if(urls.get(id)?.startsWith('blob:')&&typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(urls.get(id));const url=StatisticsTools.csvURL(rows,URL,Blob);urls.set(id,url);a.href=url;a.download=name;a.hidden=false;}
   function bars(rows,label,index){
     const values=rows.map(r=>StatisticsTools.numeric(r[index]));
     const max=Math.max(0,...values.filter(v=>v!==null));
@@ -21,7 +21,7 @@
     download('localSummaryDownload',[['자료','선택 열','전체 행','수치','빈 셀','비수치','최솟값','최댓값','평균'],[local.name,local.columns[index],local.rows.length,s.count,s.missing,s.invalid,s.min,s.max,s.mean]],'triguard-column-summary.csv');
   }
   function useLocal(dataset,name){local={...dataset,name};$('#localColumn').innerHTML=local.columns.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('');$('#localColumn').value=String(Math.min(1,local.columns.length-1));$('#localColumn').disabled=false;$('#localError').textContent='';renderLocal();}
-  function clearLocal(){local=null;$('#localColumn').innerHTML='';$('#localColumn').disabled=true;for(const id of ['localSummary','localPreview','localBars','localChartNote','localError'])$('#'+id).textContent='';for(const id of ['localDownload','localSummaryDownload']){if(urls.has(id))URL.revokeObjectURL(urls.get(id));urls.delete(id);$('#'+id).hidden=true;$('#'+id).removeAttribute('href');}}
+  function clearLocal(){local=null;$('#localColumn').innerHTML='';$('#localColumn').disabled=true;for(const id of ['localSummary','localPreview','localBars','localChartNote','localError'])$('#'+id).textContent='';for(const id of ['localDownload','localSummaryDownload']){if(urls.get(id)?.startsWith('blob:')&&typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(urls.get(id));urls.delete(id);$('#'+id).hidden=true;$('#'+id).removeAttribute('href');}}
   $('#localFile').addEventListener('change',async()=>{
     const current=++generation;clearLocal();const file=$('#localFile').files[0];if(!file)return;
     try {if(!/\.csv$/i.test(file.name)||file.size>5*1024*1024)throw Error('5MB 이하 CSV 파일을 선택하세요.');const buffer=await file.arrayBuffer();const text=new TextDecoder($('#localEncoding').value,{fatal:true}).decode(buffer);const parsed=StatisticsTools.parseCSV(text);if(current===generation)useLocal(parsed,file.name);}

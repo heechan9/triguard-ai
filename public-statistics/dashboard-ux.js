@@ -16,5 +16,19 @@
   }
   $('#prepareReport').addEventListener('click',()=>{if(prepareReport())$('#reportPreview').scrollIntoView({block:'start'});});
   $('#reportPrint').addEventListener('click',()=>{if(prepareReport())window.print();});
+  async function loadChanges(){
+    $('#sourceChangesRetry').hidden=true;
+    try {
+      const response=await fetch('/data/source_changes.json');
+      if(!response.ok)throw Error('missing');
+      const log=await response.json();
+      const states={unchanged:'동일',changed:'내용 변경',added:'추가',removed:'삭제'};
+      if(!Array.isArray(log.files)||log.files.some(f=>!states[f.state]))throw Error('invalid');
+      const changes=log.files.filter(f=>f.state!=='unchanged');
+      $('#sourceChanges').innerHTML=`<p>원본 변경 감지 기준일: ${esc(log.baseline_date)} · 검사 시각: ${esc(log.checked_at)}</p><p>${Object.entries(states).map(([key,label])=>`${label} ${log.files.filter(f=>f.state===key).length}개`).join(' · ')}</p><p>${esc(log.baseline_note)}</p>${changes.length?`<ul>${changes.map(f=>`<li>${states[f.state]}: ${esc(f.source)}</li>`).join('')}</ul><p>변경된 자료의 기준일·열 구조·단위를 다시 확인하세요.</p>`:'<p>검토 기준과 파일 내용이 같습니다.</p>'}<a href="/data/source_changes.json" download="triguard-source-changes.json">원본 변경 대조 JSON 다운로드</a>`;
+    }catch{ $('#sourceChanges').textContent='원본 변경 기록을 확인할 수 없습니다. 변경 없음으로 해석하지 마세요.';$('#sourceChangesRetry').hidden=false;}
+  }
+  $('#sourceChangesRetry').addEventListener('click',loadChanges);
+  loadChanges();
   window.syncDashboardURL();
 })();
