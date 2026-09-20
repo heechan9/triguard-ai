@@ -10,6 +10,21 @@ const offices = {
   강원도:['강원','강원영동'], 충청북도:['충북'], 전라북도:['전북'], 경상남도:['경남'], 제주특별자치도:['제주'],
 };
 let data;
+async function loadValidationReport() {
+  const panel = $('#validationSummary');
+  try {
+    const response = await fetch('/data/validation_report.json');
+    if (!response.ok) throw new Error('Validation report unavailable');
+    const report = await response.json();
+    if (report.status !== 'passed' || report.source_sha256 !== data.source_sha256 ||
+        report.row_count !== data.rows.length || !Number.isFinite(Date.parse(report.checked_at))) {
+      throw new Error('Validation report does not match the displayed source');
+    }
+    panel.textContent = `배포 전 원자료 대조 완료: ${report.row_count}행 · ${report.numeric_value_count}개 수치 · 연도별 합계 ${report.national_total_checks}건 · 다운로드 ${report.download_files_checked}개. 검사 시각: ${new Date(report.checked_at).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})} (한국시간). 보관 원자료와의 일치 여부를 검사하며, 공식 통계의 정확성·최신성을 보증하지 않습니다.`;
+  } catch (_) {
+    panel.textContent = '원자료 대조 결과를 확인할 수 없습니다. 검증 완료로 해석하지 말고 원본 CSV와 대조해 주세요.';
+  }
+}
 let selected = '서울특별시';
 const validCount = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
 const count = (v) => validCount(v) ? v.toLocaleString('ko-KR') : '자료 없음';
@@ -108,6 +123,7 @@ async function load() {
     $('#sourceName').textContent = data.source;
     $('#sourceLink').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/'+encodeURIComponent(data.source);
     drawMap(geo); renderYear();
+    loadValidationReport();
     $('#loadStatus').textContent = '17개 시·도 · 2019–2025년 자료';
   } catch (error) {
     $('#loadStatus').textContent = '자료를 불러오지 못했습니다. 다시 시도해 주세요.';
