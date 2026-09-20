@@ -1,3 +1,4 @@
+const escapeHtml = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 const number = (value) => Number(value ?? 0).toFixed(1);
 const badgeClass = (grade) => grade === "위험" ? "danger" : grade === "주의" ? "caution" : "normal";
 const gradeFromScore = (score) => score >= 60 ? "위험" : score >= 35 ? "주의" : "정상";
@@ -104,18 +105,18 @@ function renderMap(snapshot, geojson) {
 function renderMapDetail(row) {
   document.querySelector("#mapDetail").innerHTML = `
     <p class="eyebrow">SELECTED REGION</p>
-    <div class="detail-head"><div><h3>${row.province}</h3><p>${row.offices.join(" / ")}</p></div><strong>${number(row.score)}</strong></div>
-    <span class="badge ${badgeClass(row.grade)}">${row.grade}</span>
+    <div class="detail-head"><div><h3>${escapeHtml(row.province)}</h3><p>${escapeHtml(row.offices.join(" / "))}</p></div><strong>${number(row.score)}</strong></div>
+    <span class="badge ${badgeClass(row.grade)}">${escapeHtml(row.grade)}</span>
     <dl><div><dt>인력 Risk</dt><dd>${number(row.manpower)}</dd></div><div><dt>감염병 DC</dt><dd>${number(row.disease)}</dd></div><div><dt>물자 Risk</dt><dd>${number(row.material)}</dd></div></dl>`;
 }
 
 function render(snapshot, geojson) {
   const s = snapshot.summary;
   const cards = [["분석 지방청", `${s.regions}개`], ["위험", `${s.danger}개`], ["주의", `${s.caution}개`], ["정상", `${s.normal}개`]];
-  document.querySelector("#kpis").innerHTML = cards.map(([label, value]) => `<article class="kpi"><span>${label}</span><strong>${value}</strong></article>`).join("");
-  document.querySelector("#riskBars").innerHTML = snapshot.regions.map((row) => `<div class="risk-row"><span>${row.지방청}</span><div class="track"><div class="fill ${badgeClass(row.위험등급)}" style="width:${Math.min(Number(row.통합Risk), 100)}%"></div></div><strong>${number(row.통합Risk)}</strong></div>`).join("");
-  document.querySelector("#topRegions").innerHTML = snapshot.regions.slice(0, 3).map((row, index) => `<div class="top-item"><span class="rank">${index + 1}</span><div><strong>${row.지방청}</strong><small>${row.위험등급} · 우선 검토</small></div><span class="score">${number(row.통합Risk)}</span></div>`).join("");
-  document.querySelector("#riskTable").innerHTML = snapshot.regions.map((row, index) => `<tr><td>${index + 1}</td><td><strong>${row.지방청}</strong></td><td>${number(row.통합Risk)}</td><td>${number(row.인력Risk)}</td><td>${number(row.감염병DC)}</td><td>${number(row.물자Risk)}</td><td><span class="badge ${badgeClass(row.위험등급)}">${row.위험등급}</span></td></tr>`).join("");
+  document.querySelector("#kpis").innerHTML = cards.map(([label, value]) => `<article class="kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></article>`).join("");
+  document.querySelector("#riskBars").innerHTML = snapshot.regions.map((row) => `<div class="risk-row"><span>${escapeHtml(row.지방청)}</span><div class="track"><div class="fill ${badgeClass(row.위험등급)}" style="width:${Math.min(Number(row.통합Risk), 100)}%"></div></div><strong>${number(row.통합Risk)}</strong></div>`).join("");
+  document.querySelector("#topRegions").innerHTML = snapshot.regions.slice(0, 3).map((row, index) => `<div class="top-item"><span class="rank">${index + 1}</span><div><strong>${escapeHtml(row.지방청)}</strong><small>${escapeHtml(row.위험등급)} · 우선 검토</small></div><span class="score">${number(row.통합Risk)}</span></div>`).join("");
+  document.querySelector("#riskTable").innerHTML = snapshot.regions.map((row, index) => `<tr><td>${index + 1}</td><td><strong>${escapeHtml(row.지방청)}</strong></td><td>${number(row.통합Risk)}</td><td>${number(row.인력Risk)}</td><td>${number(row.감염병DC)}</td><td>${number(row.물자Risk)}</td><td><span class="badge ${badgeClass(row.위험등급)}">${escapeHtml(row.위험등급)}</span></td></tr>`).join("");
   document.querySelector("#claimBoundary").textContent = snapshot.claim_boundary;
   document.querySelector("#generatedAt").textContent = `생성 시각 ${new Date(snapshot.generated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`;
   renderMap(snapshot, geojson);
