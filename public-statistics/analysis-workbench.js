@@ -14,7 +14,7 @@
     $('#localReviewSummary').textContent=`${result.status} · 검사 ${result.checked}행 · 보완 ${result.held}행 · 문제 ${result.issues.length}건. 기록 번호는 제목을 1번으로 센 CSV 기록 순서이며, 셀 안 줄바꿈과 빈 줄 때문에 편집기 줄 번호와 다를 수 있습니다.`;
     $('#localFingerprint').textContent=`입력 식별: ${local.fingerprint}. 검토 결과는 이 입력과 선택한 검사 방식에만 해당합니다.`;
     $('#localIssues').innerHTML=result.issues.length?`<table><caption>처음 50개 문제 · 전체 목록은 CSV로 저장</caption><thead><tr><th>기록 번호</th><th>항목</th><th>보완 사유</th><th>원본 값</th></tr></thead><tbody>${result.issues.slice(0,50).map(v=>`<tr><td>${v.row}</td><td>${esc(v.column)}</td><td>${esc(v.reason)}</td><td>${esc(v.value)}</td></tr>`).join('')}</tbody></table>`:'<p>선택한 검사에서 발견된 문제가 없습니다. 단위와 출처의 타당성은 별도 확인하세요.</p>';
-    download('localIssuesDownload',[['파일','입력 SHA-256 또는 구분','검사 방식','선택 수치 열','기록 번호','항목','보완 사유','원본 값'],...result.issues.map(v=>[local.name,local.fingerprint,$('#localContract').value,local.columns[index],v.row,v.column,v.reason,v.value])],'triguard-row-review.csv');
+    download('localIssuesDownload',[['파일','입력 SHA-256 또는 구분','검사 방식','선택 수치 열','기록 번호','항목','보완 사유','원본 값'],...result.issues.map(v=>[local.name,local.fingerprint,$('#localContract').value,$('#localContract').value==='regional'?'값':local.columns[index],v.row,v.column,v.reason,v.value])],'triguard-row-review.csv');
   }
   function renderLocal(){
     if(!local)return;
@@ -28,14 +28,14 @@
     download('localDownload',[local.columns,...local.rows],'triguard-local-data.csv');
     download('localSummaryDownload',[['자료','선택 열','전체 행','수치','빈 셀','비수치','최솟값','최댓값','평균'],[local.name,local.columns[index],local.rows.length,s.count,s.missing,s.invalid,s.min,s.max,s.mean]],'triguard-column-summary.csv');
   }
-  function useLocal(dataset,name,fingerprint='가상 자료 · 파일 해시 없음'){local={...dataset,name,fingerprint};$('#localColumn').innerHTML=local.columns.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('');$('#localColumn').value=String(Math.min(1,local.columns.length-1));$('#localColumn').disabled=false;$('#localError').textContent='';renderLocal();}
+  function useLocal(dataset,name,fingerprint='가상 자료 · 파일 해시 없음'){local={...dataset,name,fingerprint};$('#localColumn').innerHTML=local.columns.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('');$('#localColumn').value=String($('#localContract').value==='regional'&&local.columns.map(c=>c.trim()).includes('값')?local.columns.findIndex(c=>c.trim()==='값'):Math.min(1,local.columns.length-1));$('#localColumn').disabled=false;$('#localError').textContent='';renderLocal();}
   function clearLocal(){local=null;$('#localColumn').innerHTML='';$('#localColumn').disabled=true;for(const id of ['localSummary','localPreview','localBars','localChartNote','localError','localReviewSummary','localFingerprint','localIssues'])$('#'+id).textContent='';for(const id of ['localDownload','localSummaryDownload','localIssuesDownload']){if(urls.get(id)?.startsWith('blob:')&&typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(urls.get(id));urls.delete(id);$('#'+id).hidden=true;$('#'+id).removeAttribute('href');}}
   $('#localFile').addEventListener('change',async()=>{
     const current=++generation;clearLocal();const file=$('#localFile').files[0];if(!file)return;
     try {if(!/\.csv$/i.test(file.name)||file.size>5*1024*1024)throw Error('5MB 이하 CSV 파일을 선택하세요.');const buffer=await file.arrayBuffer();const text=new TextDecoder($('#localEncoding').value,{fatal:true}).decode(buffer);const parsed=StatisticsTools.parseCSV(text);const digest=globalThis.crypto?.subtle?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):'해시 계산 불가';if(current===generation)useLocal(parsed,file.name,digest);}
     catch(e){if(current===generation)$('#localError').textContent=e.message;}
   });
-  $('#localContract').addEventListener('change',renderLocal);
+  $('#localContract').addEventListener('change',()=>{if(local&&$('#localContract').value==='regional'){const valueIndex=local.columns.findIndex(c=>c.trim()==='값');if(valueIndex>=0)$('#localColumn').value=String(valueIndex);}renderLocal();});
   $('#localColumn').addEventListener('change',renderLocal);
   $('#clearLocal').addEventListener('click',()=>{generation++;$('#localFile').value='';clearLocal();});
   $('#generateSample').addEventListener('click',()=>{generation++;clearLocal();try{useLocal(StatisticsTools.simulate(Number($('#simSeed').value),Number($('#simBaseline').value),Number($('#simVariation').value)),'가상 행정 처리량 · 실제 지역 자료 아님');}catch(e){$('#localError').textContent=e.message;}});
