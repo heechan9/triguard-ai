@@ -233,6 +233,7 @@ function renderIntegrated() {
   advice.push('국외 계약과 입찰 참여 자료에는 주소 열이 없어 전국 집계로 표시합니다.');
   review.extra.forEach(d=>advice.push(`${d.source}: ${d.note}`));
   $('#integratedAdvice').innerHTML = advice.map(a=>`<li>${esc(a)}</li>`).join('');
+  renderPublicContext();
   if (window.renderSourceInventory) window.renderSourceInventory();
   if (!agencyData.length && window.renderAgencyInspector) window.renderAgencyInspector();
 }
@@ -266,6 +267,7 @@ document.addEventListener('click', event => {
 
 function renderResearch() {
   if (!researchScores || !data) return;
+  renderPublicContext();
   const rows = researchScores.regions.filter(r=>(offices[selected] || []).includes(r.지방청));
   const date = researchScores.generated_at.slice(0,10);
   const scoreCards = rows.map(r=>`<section class="research-kpi"><h4>${esc(r.지방청)} 지방청</h4><strong>${r.통합Risk.toFixed(2)}<small> / 100</small></strong><p>기존 분류: ${esc(r.위험등급)}</p></section>`).join('') || '<p>이 지역의 기존 연구 결과가 없습니다.</p>';
@@ -288,6 +290,7 @@ async function loadResearch() {
     researchScores = snapshot; renderResearch();
   } catch (e) {
     researchScores = null;
+    renderPublicContext();
     $('#researchScore').innerHTML = '<h3>통합 리스크 스코어</h3><p>기존 연구 결과를 불러오지 못했습니다. 0점으로 대체하지 않습니다.</p>';
     $('#scoreRetry').hidden = false;
   }

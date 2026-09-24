@@ -41,3 +41,16 @@ test('Additional sources follow shared jurisdictions, not selected year',()=>{
  assert.deepEqual(review('경기도').extra.find(d=>d.extra_kind==='enlist').selectedRows.map(r=>r[0]),['경 인','경기북부']);
  assert.deepEqual(review('서울특별시',data,agencies,report,2019).extra,review('서울특별시').extra);
 });
+
+test('Public context keeps agency dates independent and missing sources explicit',()=>{
+ const {publicContextRows}=require('../public-statistics/public-context.js');
+ const rows=publicContextRows(data,agencies,review(),2025);
+ assert.equal(rows[0].period,'2025년');
+ assert.equal(rows[1].scope,'대구 · 경북');
+ assert.equal(rows[1].period,'원본 조회 기간 미확인');
+ assert.equal(rows[2].period,'원본 전체 기간');
+ const old=publicContextRows(data,agencies,review('경상북도',data,agencies,report,2019),2019);
+ assert.equal(old[0].period,'2019년');assert.deepEqual(old.slice(1),rows.slice(1));
+ const missing=publicContextRows(data,[],review('경상북도',data,[]),2025);
+ assert.equal(missing[1].source,undefined);assert.equal(missing[2].state,'미연결');
+});
