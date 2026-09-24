@@ -6,8 +6,10 @@ from collections import Counter
 from pathlib import Path
 
 try:
+    from .public_release_guard import check_source
     from .agency_metadata import supplier_regions, health_metadata
 except ImportError:
+    from public_release_guard import check_source
     from agency_metadata import supplier_regions, health_metadata
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,8 +29,9 @@ def generate(root=ROOT):
         if not path.name.startswith(('방위사업청', '질병관리청', '행정안전부', '무역안보관리원', '병무청_현역병 지방청별 입영현황_20241231', '병무청_병역면제자')):
             continue
         raw, rows = read_rows(path)
+        contract = check_source(path.name, rows)
         source_rows = len(rows)
-        item = {'source': path.name, 'sha256': hashlib.sha256(raw).hexdigest()}
+        item = {'source': path.name, 'sha256': hashlib.sha256(raw).hexdigest(), 'contract':contract}
         if path.name.startswith('방위사업청'):
             header, records = rows[0], rows[1:]
             source_rows = len(records)
