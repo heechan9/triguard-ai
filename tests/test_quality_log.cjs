@@ -1,0 +1,9 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),q=require('../public-statistics/quality-log.js');
+const ctx={region:'서울특별시',examYear:'2025',revision:'a'.repeat(40)},time='2026-09-24T10:00:00Z';
+const create=()=>q.create({requirement:'CHECK-02',expected:'원본과 같음',observed:'차이 확인'},ctx,'QA-001',time);
+test('registration freezes context and starts open',()=>{const r=create();ctx.region='경기도';assert.equal(r.context.region,'서울특별시');ctx.region='서울특별시';assert.equal(r.status,'open');assert.equal(r.history.length,1);});
+test('cannot close without correction and retest evidence',()=>{const r=create();assert.throws(()=>q.transition(r,'pass','근거',ctx.revision,time));const f=q.transition(r,'fixed','수정함',ctx.revision,time);assert.throws(()=>q.transition(f,'pass',' ',ctx.revision,time));assert.equal(q.transition(f,'pass','원본 재대조',ctx.revision,time).status,'closed');assert.equal(r.history.length,1);});
+test('failed retest and reopen preserve complete history',()=>{let r=q.transition(create(),'fixed','수정',ctx.revision,time);r=q.transition(r,'fail','문제 남음',ctx.revision,time);assert.equal(r.status,'open');r=q.transition(r,'fixed','다시 수정',ctx.revision,time);r=q.transition(r,'pass','재대조 완료',ctx.revision,time);r=q.transition(r,'reopen','추가 문제',ctx.revision,time);assert.equal(r.status,'open');assert.equal(r.history.length,6);});
+test('reject unsupported requirements, missing data and invalid revision',()=>{for(const input of [{requirement:'OTHER',expected:'a',observed:'b'},{requirement:'CHECK-01',expected:' ',observed:'b'}])assert.throws(()=>q.create(input,ctx,'QA-001',time));assert.throws(()=>q.transition(create(),'fixed','수정','',time));});
+test('bound text and event history',()=>{assert.throws(()=>q.transition(create(),'fixed','a'.repeat(1001),ctx.revision,time));const r=create();r.history=Array(50).fill(r.history[0]);assert.throws(()=>q.transition(r,'fixed','수정',ctx.revision,time));});
