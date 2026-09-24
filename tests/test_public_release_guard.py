@@ -23,6 +23,8 @@ class SourceContracts(unittest.TestCase):
         name='질병관리청_급성호흡기.csv'
         row=['2025','1']+['0']*8+['']
         self.assertEqual(check_source(name,[row])['metadata'],'confirmed')
+        pending=['2026','21']+['집계 중']*8+['']
+        self.assertEqual(check_source(name,[pending])['pending_cells'],8)
         for rows in [[row,row],[row[:2]+['NaN']+row[3:]],[['2025','54']+row[2:]]]:
             with self.assertRaises(ValueError):check_source(name,rows)
 

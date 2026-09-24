@@ -23,9 +23,9 @@ def check_source(name, rows):
                 if key in keys:
                     raise ValueError(f'{name}: duplicate year/week')
                 keys.add(key)
-                if any(not v.isdigit() for v in r[2:-1]) or r[-1].strip():
+                if any(not v.isdigit() and v not in {'', '집계 중'} for v in r[2:-1]) or r[-1].strip():
                     raise ValueError(f'{name}: invalid count or trailing column')
-        return {'structure':'passed', 'metadata':'confirmed' if '급성호흡기' in name else 'pending', 'columns':width}
+        return {'structure':'passed', 'metadata':'confirmed' if '급성호흡기' in name else 'pending', 'columns':width, 'pending_cells':sum(v in {'', '집계 중'} for r in rows for v in r[2:-1]) if '급성호흡기' in name else None}
     header, records = rows[0], rows[1:]
     clean = [v.strip() for v in header]
     if not records or any(not v for v in clean) or len(set(clean)) != len(clean):
