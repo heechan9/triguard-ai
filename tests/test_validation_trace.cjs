@@ -1,0 +1,10 @@
+'use strict';
+const test=require('node:test'), assert=require('node:assert/strict');
+const trace=require('../public-statistics/validation-trace.js');
+const data={source_sha256:'a'.repeat(64),rows:Array.from({length:15},()=>({year:2025}))};
+const report={schema_version:1,status:'passed',source_sha256:data.source_sha256,checked_at:'2026-09-24T10:00:00Z',row_count:15,numeric_value_count:90,year_count:1,office_count:14,national_total_checks:6,download_files_checked:1,checks:['source_hash','source_values','unique_year_office','nonnegative_integer_counts','office_coverage','national_totals','csv_downloads']};
+test('complete evidence yields seven scoped checks',()=>{assert.ok(trace.accepts(report,data));assert.equal(trace.rows(report,data).length,7);assert.ok(trace.rows(report,data).every(r=>r.status==='배포 전 검사 통과'));});
+test('missing report or check never looks passed',()=>{for(const r of [null,{...report,checks:[]},{...report,checks:report.checks.slice(1)}]){assert.ok(!trace.accepts(r,data));assert.ok(trace.rows(r,data).every(x=>x.status==='미확인'));}});
+test('different source, bad date, or unsupported schema rejected',()=>{for(const patch of [{source_sha256:'b'.repeat(64)},{checked_at:'unknown'},{schema_version:2},{status:'failed'}])assert.ok(!trace.accepts({...report,...patch},data));});
+test('inconsistent or incorrectly typed counts rejected',()=>{for(const patch of [{row_count:14},{numeric_value_count:89},{national_total_checks:'6'},{download_files_checked:0},{office_count:15}])assert.ok(!trace.accepts({...report,...patch},data));});
+test('failure gives concrete corrective actions',()=>{const r=trace.rows(null,data);assert.match(r[3].action,/빈 값과 0/);assert.match(r[6].action,/재검사/);assert.ok(!trace.accepts(report,{...data,rows:[]}));});

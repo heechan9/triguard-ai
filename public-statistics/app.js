@@ -14,12 +14,17 @@ let researchScores = null;
 let validationReport = null;
 async function loadValidationReport() {
   const panel = $('#validationSummary');
+  const retry = $('#validationRetry');
+  retry.onclick = loadValidationReport;
+  retry.disabled = true;
+  validationReport = null;
+  ValidationTrace.render(null, data);
+  panel.textContent = '배포 전 검사 근거를 확인하는 중입니다.';
   try {
     const response = await fetch('/data/validation_report.json');
     if (!response.ok) throw new Error('Validation report unavailable');
     const report = await response.json();
-    if (report.status !== 'passed' || report.source_sha256 !== data.source_sha256 ||
-        report.row_count !== data.rows.length || !Number.isFinite(Date.parse(report.checked_at))) {
+    if (!ValidationTrace.accepts(report, data)) {
       throw new Error('Validation report does not match the displayed source');
     }
     validationReport = report;
@@ -29,6 +34,9 @@ async function loadValidationReport() {
     validationReport = null;
     renderIntegrated();
     panel.textContent = '원자료 대조 결과를 확인할 수 없습니다. 검증 완료로 해석하지 말고 원본 CSV와 대조해 주세요.';
+  } finally {
+    ValidationTrace.render(validationReport, data);
+    retry.disabled = false;
   }
 }
 let selected = '서울특별시';
