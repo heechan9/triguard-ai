@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/test_data_review.cjs tests/test_statistics_tools.cjs tests/test_dashboard_state.cjs tests/test_csv_review.cjs tests/test_report_evidence.cjs tests/test_validation_trace.cjs
+      - run: node --test tests/test_data_review.cjs tests/test_statistics_tools.cjs tests/test_dashboard_state.cjs tests/test_csv_review.cjs tests/test_report_evidence.cjs tests/test_validation_trace.cjs tests/test_quality_log.cjs
       - uses: actions/upload-artifact@v4
         with:
           name: public-statistics-validation

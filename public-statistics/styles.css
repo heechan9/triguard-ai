@@ -260,3 +260,10 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(
 #reportPreview .report-number {white-space:nowrap;overflow-wrap:normal;word-break:normal;font-variant-numeric:tabular-nums;}
 @media(max-width:600px){.public-context-grid{grid-template-columns:1fr;}#reportPreview{margin:24px 4vw;padding:16px;}#reportPreview th,#reportPreview td{padding:10px 6px;}#reportPreview h1{font-size:28px;word-break:keep-all;}}
 @media print {#reportPreview .report-table-wrap{overflow:visible;}#reportPreview table{min-width:0;}#reportPreview th,#reportPreview td{padding:5px;}}
+
+.quality-form{display:grid;gap:14px;margin:18px 0;}
+.quality-form label{display:grid;gap:6px;}
+.quality-form textarea,.quality-form select{width:100%;max-width:100%;box-sizing:border-box;background:var(--navy-900);color:var(--ink);border:1px solid var(--line);padding:10px;font:inherit;}
+.quality-form button{justify-self:start;}
+.quality-record{border-top:1px solid var(--line);margin-top:24px;padding-top:16px;overflow-wrap:anywhere;}
+.quality-record p,.quality-record li{white-space:pre-wrap;}
