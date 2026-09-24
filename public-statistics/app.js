@@ -162,6 +162,7 @@ function renderAgency() {
   agencyPage = Math.min(agencyPage, pages - 1);
   $('#agencyTitle').textContent = d.source.replace(/\.csv$/, '');
   $('#agencyNote').textContent = (d.metadata?.unit ? '공식 조회와 대조한 열 제목입니다. ' : d.note + ' ') + (d.metadata ? d.metadata.note : '');
+  if(d.contract) $('#agencyNote').textContent += ` 파일 구조 검사: ${d.contract.structure==='passed'?'통과':'미확인'} · 메타데이터: ${d.contract.metadata==='pending'?'단위·기간 확인 필요':d.contract.metadata==='confirmed'?'확인한 범위는 아래 안내 참조':'원본 열 기준 · 공식 기준일 별도 확인'}.`;
   $('#agencySummary').textContent = `원본 ${d.source_rows.toLocaleString('ko-KR')}행 · 조회 표 ${d.rows.length.toLocaleString('ko-KR')}행 · 검색 결과 ${rows.length.toLocaleString('ko-KR')}행`;
   $('#agencySource').href = 'https://github.com/heechan9/triguard-ai/blob/main/data/' + encodeURIComponent(d.source);
   $('#agencySource').hidden = false;

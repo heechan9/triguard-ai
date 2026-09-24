@@ -5,6 +5,7 @@ import json
 from validate_public_statistics import validate_project
 from export_agency_statistics import generate
 from export_research_scores import generate as generate_scores
+from public_release_guard import revision, pin_links, verify_release
 from source_manifest import generate as generate_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +16,7 @@ agencies = generate(ROOT)
 scores = generate_scores(ROOT)
 changes = generate_manifest(ROOT)
 report['research_snapshot'] = {'source_sha256':scores['source_sha256'],'rows':len(scores['regions']),'verification':'archived weighted totals and grades only'}
+report['agency_contracts'] = [{'source':d['source'], **d['contract']} for d in agencies['datasets']]
 report['agency_sources'] = [{'source': d['source'], 'sha256': d['sha256'], 'source_rows': d['source_rows']} for d in agencies['datasets']]
 if output.exists():
     shutil.rmtree(output)
@@ -25,3 +27,10 @@ assert {p.name for p in (output / 'data').iterdir()} == {'statistics.json', 'kor
 (output / 'data' / 'agencies.json').write_text(json.dumps(agencies, ensure_ascii=False), encoding='utf-8')
 (output / 'data' / 'validation_report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
 print('Built public statistics surface; source validation passed')
+
+rev = revision(ROOT)
+(output/'release-version.js').write_text('const ReleaseVersion = Object.freeze('+json.dumps({'revision':rev})+');\n',encoding='utf-8')
+pin_links(output, rev)
+manifest = verify_release(output, agencies, rev)
+(output/'data/release_manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+print('Pinned source links and verified release files:',rev)

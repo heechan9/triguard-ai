@@ -9,10 +9,18 @@
     const max=Math.max(0,...values.filter(v=>v!==null));
     return `<div class="stat-bars">${rows.map((r,i)=>`<div class="stat-bar"><span>${esc(r[label])}</span><div><i style="width:${values[i]===null||max===0?0:Math.max(0,values[i])/max*100}%"></i></div><b>${fmt(values[i])}</b></div>`).join('')}</div>`;
   }
+  function renderIssues(index){
+    const result=CSVReview.review(local,$('#localContract').value,index,StatisticsTools.numeric);
+    $('#localReviewSummary').textContent=`${result.status} · 검사 ${result.checked}행 · 보완 ${result.held}행 · 문제 ${result.issues.length}건. 기록 번호는 제목을 1번으로 센 CSV 기록 순서이며, 셀 안 줄바꿈과 빈 줄 때문에 편집기 줄 번호와 다를 수 있습니다.`;
+    $('#localFingerprint').textContent=`입력 식별: ${local.fingerprint}. 검토 결과는 이 입력과 선택한 검사 방식에만 해당합니다.`;
+    $('#localIssues').innerHTML=result.issues.length?`<table><caption>처음 50개 문제 · 전체 목록은 CSV로 저장</caption><thead><tr><th>기록 번호</th><th>항목</th><th>보완 사유</th><th>원본 값</th></tr></thead><tbody>${result.issues.slice(0,50).map(v=>`<tr><td>${v.row}</td><td>${esc(v.column)}</td><td>${esc(v.reason)}</td><td>${esc(v.value)}</td></tr>`).join('')}</tbody></table>`:'<p>선택한 검사에서 발견된 문제가 없습니다. 단위와 출처의 타당성은 별도 확인하세요.</p>';
+    download('localIssuesDownload',[['파일','입력 SHA-256 또는 구분','검사 방식','선택 수치 열','기록 번호','항목','보완 사유','원본 값'],...result.issues.map(v=>[local.name,local.fingerprint,$('#localContract').value,local.columns[index],v.row,v.column,v.reason,v.value])],'triguard-row-review.csv');
+  }
   function renderLocal(){
     if(!local)return;
     const index=Number($('#localColumn').value);
     const s=StatisticsTools.summary(local.rows,index);
+    renderIssues(index);
     $('#localSummary').textContent=`${local.name} · ${local.rows.length.toLocaleString('ko-KR')}행 · 수치 ${s.count}개 · 빈 셀 ${s.missing}개 · 비수치 ${s.invalid}개 · 최솟값 ${fmt(s.min)} · 최댓값 ${fmt(s.max)} · 평균 ${fmt(s.mean)}`;
     $('#localPreview').innerHTML=`<table><caption>처음 20행 · 원본 값</caption><thead><tr>${local.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${local.rows.slice(0,20).map(r=>`<tr>${r.map(v=>`<td>${esc(v||'자료 없음')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     $('#localBars').innerHTML=bars(local.rows.slice(0,20),0,index);
@@ -20,13 +28,14 @@
     download('localDownload',[local.columns,...local.rows],'triguard-local-data.csv');
     download('localSummaryDownload',[['자료','선택 열','전체 행','수치','빈 셀','비수치','최솟값','최댓값','평균'],[local.name,local.columns[index],local.rows.length,s.count,s.missing,s.invalid,s.min,s.max,s.mean]],'triguard-column-summary.csv');
   }
-  function useLocal(dataset,name){local={...dataset,name};$('#localColumn').innerHTML=local.columns.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('');$('#localColumn').value=String(Math.min(1,local.columns.length-1));$('#localColumn').disabled=false;$('#localError').textContent='';renderLocal();}
-  function clearLocal(){local=null;$('#localColumn').innerHTML='';$('#localColumn').disabled=true;for(const id of ['localSummary','localPreview','localBars','localChartNote','localError'])$('#'+id).textContent='';for(const id of ['localDownload','localSummaryDownload']){if(urls.get(id)?.startsWith('blob:')&&typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(urls.get(id));urls.delete(id);$('#'+id).hidden=true;$('#'+id).removeAttribute('href');}}
+  function useLocal(dataset,name,fingerprint='가상 자료 · 파일 해시 없음'){local={...dataset,name,fingerprint};$('#localColumn').innerHTML=local.columns.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join('');$('#localColumn').value=String(Math.min(1,local.columns.length-1));$('#localColumn').disabled=false;$('#localError').textContent='';renderLocal();}
+  function clearLocal(){local=null;$('#localColumn').innerHTML='';$('#localColumn').disabled=true;for(const id of ['localSummary','localPreview','localBars','localChartNote','localError','localReviewSummary','localFingerprint','localIssues'])$('#'+id).textContent='';for(const id of ['localDownload','localSummaryDownload','localIssuesDownload']){if(urls.get(id)?.startsWith('blob:')&&typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(urls.get(id));urls.delete(id);$('#'+id).hidden=true;$('#'+id).removeAttribute('href');}}
   $('#localFile').addEventListener('change',async()=>{
     const current=++generation;clearLocal();const file=$('#localFile').files[0];if(!file)return;
-    try {if(!/\.csv$/i.test(file.name)||file.size>5*1024*1024)throw Error('5MB 이하 CSV 파일을 선택하세요.');const buffer=await file.arrayBuffer();const text=new TextDecoder($('#localEncoding').value,{fatal:true}).decode(buffer);const parsed=StatisticsTools.parseCSV(text);if(current===generation)useLocal(parsed,file.name);}
+    try {if(!/\.csv$/i.test(file.name)||file.size>5*1024*1024)throw Error('5MB 이하 CSV 파일을 선택하세요.');const buffer=await file.arrayBuffer();const text=new TextDecoder($('#localEncoding').value,{fatal:true}).decode(buffer);const parsed=StatisticsTools.parseCSV(text);const digest=globalThis.crypto?.subtle?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join(''):'해시 계산 불가';if(current===generation)useLocal(parsed,file.name,digest);}
     catch(e){if(current===generation)$('#localError').textContent=e.message;}
   });
+  $('#localContract').addEventListener('change',renderLocal);
   $('#localColumn').addEventListener('change',renderLocal);
   $('#clearLocal').addEventListener('click',()=>{generation++;$('#localFile').value='';clearLocal();});
   $('#generateSample').addEventListener('click',()=>{generation++;clearLocal();try{useLocal(StatisticsTools.simulate(Number($('#simSeed').value),Number($('#simBaseline').value),Number($('#simVariation').value)),'가상 행정 처리량 · 실제 지역 자료 아님');}catch(e){$('#localError').textContent=e.message;}});
@@ -79,10 +88,10 @@
     const sources=data?[{source:data.source,sha256:data.source_sha256,source_rows:data.rows.length,period_note:data.date_note,main:true},...agencyData]:agencyData;
     const rows=sources.map(d=>{
       const matched=validationReport?.status==='passed'&&(d.main?validationReport.source_sha256===d.sha256&&validationReport.row_count===d.source_rows:validationReport.agency_sources?.some(r=>r.source===d.source&&r.sha256===d.sha256&&r.source_rows===d.source_rows));
-      return [d.source,d.source_rows,d.period_note||d.metadata?.period||'공통 기준일 미확인',d.metadata?.unit||(d.extra_kind&&d.extra_kind!=='catalog'?'명':'자료별 원문 참조'),matched?'원본 식별정보 일치':'검증 미확인',d.sha256];
+      return [d.source,d.source_rows,d.period_note||d.metadata?.period||'공통 기준일 미확인',d.metadata?.unit||(d.extra_kind&&d.extra_kind!=='catalog'?'명':'자료별 원문 참조'),matched?'원본 식별정보 일치':'검증 미확인',d.sha256,ReleaseVersion.revision];
     });
-    const headers=['자료','원본 자료 행 수','기간 안내','단위 안내','출처 대조','SHA-256'];
-    $('#sourceInventory').innerHTML=`<p>${sources.length}/12종 로드</p><table><caption>기관 자료별 연결·기준일·출처 대조</caption><thead><tr>${headers.slice(0,5).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.slice(0,5).map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    const headers=['자료','원본 자료 행 수','기간 안내','단위 안내','출처 대조','SHA-256','조회 자료 버전'];
+    $('#sourceInventory').innerHTML=`<p>${sources.length}/12종 로드 · 출처 링크는 배포 자료 버전에 고정됩니다.</p><p><code class="source-hash">${esc(ReleaseVersion.revision)}</code> · <a href="/data/release_manifest.json" download>배포 파일 검증 목록 JSON</a></p><table><caption>기관 자료별 연결·기준일·출처 대조</caption><thead><tr>${headers.slice(0,5).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.slice(0,5).map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     download('sourceInventoryDownload',[headers,...rows],'triguard-source-inventory.csv');
   };
   window.renderAgencyInspector();
